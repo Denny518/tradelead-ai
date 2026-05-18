@@ -1,8 +1,5 @@
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
-
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
-  const url = `${BACKEND_URL}${path}`;
-  const res = await fetch(url, {
+  const res = await fetch(path, {
     headers: { "Content-Type": "application/json", ...options?.headers },
     ...options,
   });
@@ -162,5 +159,5 @@ export async function saveEmailToCustomer(
 export function exportCustomersCSVUrl(status?: string): string {
   const params = new URLSearchParams();
   if (status) params.set("status", status);
-  return `${BACKEND_URL}/api/customers/export-csv?${params.toString()}`;
+  return `/api/customers/export-csv?${params.toString()}`;
 }
