@@ -59,7 +59,7 @@ export default function QuotationPage() {
     <div>
       <h2 className="text-lg font-semibold text-gray-900 mb-6">AI 报价单生成器</h2>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
         {/* Input */}
         <div className="space-y-4">
           {/* Scenario & Template */}
@@ -187,7 +187,7 @@ export default function QuotationPage() {
               {result.companyIntro && <p className="text-sm text-gray-600 mb-4 p-3 bg-gray-50 rounded-lg">{result.companyIntro}</p>}
               <p className="text-sm text-gray-600 mb-4">{result.headerNote}</p>
 
-              <table className="w-full text-sm mb-4">
+              <div className="overflow-x-auto"><table className="w-full text-sm mb-4 min-w-[500px]">
                 <thead><tr className="border-b-2 border-gray-200 text-left text-xs text-gray-500"><th className="py-2">#</th><th className="py-2">品名</th><th className="py-2">规格</th><th className="py-2 text-right">单价</th><th className="py-2 text-center">数量</th><th className="py-2 text-right">小计</th></tr></thead>
                 <tbody>
                   {result.productTable?.map((row: any, i: number) => (
@@ -196,7 +196,7 @@ export default function QuotationPage() {
                   {result.discountInfo && <tr><td colSpan={5} className="py-2 text-right text-xs text-green-600">{result.discountInfo}</td><td className="py-2 text-right text-green-600 font-medium">-</td></tr>}
                   <tr className="font-bold text-base"><td colSpan={5} className="py-3 text-right">总计</td><td className="py-3 text-right">{options.currency} {result.totalAmount?.toFixed(2) || grandTotal.toFixed(2)}</td></tr>
                 </tbody>
-              </table>
+              </table></div>
 
               {result.termsSection && (
                 <div className="bg-gray-50 rounded-lg p-4 mb-3 text-sm space-y-1">

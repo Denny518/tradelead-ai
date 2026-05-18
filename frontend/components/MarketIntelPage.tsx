@@ -309,7 +309,7 @@ export default function MarketIntelPage() {
                   )}
 
                   {/* Grid: Opportunities + Risks */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-4">
                     {/* Opportunities */}
                     <div>
                       <div className="text-xs font-medium text-gray-500 mb-2">市场机会</div>

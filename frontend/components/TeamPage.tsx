@@ -87,8 +87,8 @@ export default function TeamPage() {
           <p className="text-sm mt-1">邀请你的同事加入团队</p>
         </div>
       ) : (
-        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-          <table className="w-full text-sm">
+        <div className="bg-white rounded-xl border border-gray-200 overflow-x-auto">
+          <table className="w-full text-sm min-w-[600px]">
             <thead>
               <tr className="bg-gray-50 text-left">
                 <th className="px-6 py-3 font-medium text-gray-500">邮箱</th>

@@ -69,8 +69,8 @@ export default function DealScorePage() {
           {customers.map((c) => {
             const score = scores[c.id];
             return (
-              <div key={c.id} className="bg-white rounded-xl border border-gray-200 p-5">
-                <div className="flex items-start justify-between">
+              <div key={c.id} className="bg-white rounded-xl border border-gray-200 p-4 sm:p-5">
+                <div className="flex flex-col sm:flex-row items-start justify-between gap-3">
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-3">
                       <h3 className="font-semibold text-gray-900">{c.company_name}</h3>
@@ -122,7 +122,7 @@ export default function DealScorePage() {
                   <button
                     onClick={() => handleAnalyze(c.id)}
                     disabled={analyzing === c.id}
-                    className="ml-4 px-4 py-2 text-xs font-medium bg-primary text-white rounded-lg hover:bg-primary-dark disabled:opacity-50 whitespace-nowrap"
+                    className="sm:ml-4 px-4 py-2 text-xs font-medium bg-primary text-white rounded-lg hover:bg-primary-dark disabled:opacity-50 whitespace-nowrap w-full sm:w-auto text-center"
                   >
                     {analyzing === c.id ? "AI分析中..." : score ? "重新分析" : "AI 分析"}
                   </button>

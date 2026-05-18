@@ -42,7 +42,7 @@ export default function FollowupsPage() {
       </div>
 
       {/* Summary cards */}
-      <div className="grid grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-3 gap-3 sm:gap-4 mb-6">
         <div className="bg-white rounded-xl border border-gray-200 p-4">
           <div className="text-2xl font-bold text-red-600">{summary.overdue}</div>
           <div className="text-sm text-gray-500">超期未跟进</div>
@@ -71,8 +71,8 @@ export default function FollowupsPage() {
           <p className="text-sm mt-1">发送邮件后会自动计算跟进时间</p>
         </div>
       ) : (
-        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-          <table className="w-full text-sm">
+        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden overflow-x-auto">
+          <table className="w-full text-sm min-w-[700px]">
             <thead>
               <tr className="bg-gray-50 text-left">
                 <th className="px-6 py-3 font-medium text-gray-500">客户</th>

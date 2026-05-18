@@ -89,7 +89,8 @@ export default function PipelinePage() {
       </div>
 
       {/* Kanban board */}
-      <div className="grid grid-cols-6 gap-3 overflow-x-auto pb-4" style={{ minWidth: "1100px" }}>
+      <div className="overflow-x-auto pb-4 -mx-4 px-4 sm:mx-0 sm:px-0">
+        <div className="grid grid-cols-6 gap-2 sm:gap-3" style={{ minWidth: "900px", gridTemplateColumns: "repeat(6, minmax(130px, 1fr))" }}>
         {STAGE_ORDER.map((stage) => {
           const stageCustomers = getCustomersByStage(stage);
           const stageInfo = STAGES[stage];
@@ -149,6 +150,7 @@ export default function PipelinePage() {
             </div>
           );
         })}
+      </div>
       </div>
     </div>
   );

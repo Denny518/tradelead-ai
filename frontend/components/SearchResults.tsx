@@ -76,9 +76,8 @@ export default function SearchResults({
       </div>
 
       {/* Results table */}
-      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+      <div className="bg-white rounded-xl border border-gray-200 overflow-x-auto">
+          <table className="w-full text-sm min-w-[900px]">
             <thead>
               <tr className="bg-gray-50 text-left">
                 <th className="px-4 py-3 font-medium text-gray-500 whitespace-nowrap">公司名称</th>
@@ -195,7 +194,6 @@ export default function SearchResults({
               })}
             </tbody>
           </table>
-        </div>
       </div>
     </div>
   );

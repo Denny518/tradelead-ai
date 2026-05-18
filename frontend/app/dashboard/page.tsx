@@ -29,6 +29,7 @@ import {
 
 export default function DashboardPage() {
   const [activeTab, setActiveTab] = useState("overview");
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Product knowledge
   const [productKnowledge, setProductKnowledge] = useState<ProductKnowledge | null>(null);
@@ -231,9 +232,20 @@ export default function DashboardPage() {
 
   return (
     <div className="flex h-full">
-      <Sidebar activeTab={activeTab} onTabChange={setActiveTab} />
+      <Sidebar activeTab={activeTab} onTabChange={setActiveTab} open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
       <main className="flex-1 overflow-y-auto bg-gray-50">
+        {/* Mobile header with hamburger */}
+        <div className="lg:hidden sticky top-0 z-30 bg-white border-b border-gray-100 px-4 py-3 flex items-center gap-3">
+          <button onClick={() => setSidebarOpen(true)} className="p-1.5 text-gray-600 hover:text-gray-900">
+            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"/></svg>
+          </button>
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 bg-primary rounded flex items-center justify-center"><span className="text-white font-bold text-[10px]">TL</span></div>
+            <span className="font-semibold text-sm">TradeLead AI</span>
+          </div>
+        </div>
+
         <div className="max-w-6xl mx-auto px-4 sm:px-8 py-4 sm:py-8">
           {/* Product Knowledge missing banner */}
           {!hasKnowledge && activeTab !== "knowledge" && (
@@ -254,7 +266,7 @@ export default function DashboardPage() {
             <div>
               <h2 className="text-2xl font-bold text-gray-900 mb-2">概览</h2>
               <p className="text-gray-500 mb-8">欢迎使用 TradeLead AI，AI 成交辅助系统</p>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-8">
                 {[
                   { label: "已存客户", value: "-", color: "text-blue-600" },
                   { label: "AI 邮件生成", value: "-", color: "text-green-600" },
@@ -270,7 +282,7 @@ export default function DashboardPage() {
               {/* Quick start */}
               <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-100 p-6">
                 <h3 className="font-semibold text-gray-900 mb-3">快速开始</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm text-gray-600">
                   <div>
                     <p className="font-medium text-gray-800 mb-2">基础流程</p>
                     <ol className="space-y-1.5">
@@ -287,7 +299,7 @@ export default function DashboardPage() {
                       <li>⭐ "报价单生成" - AI 生成专业报价</li>
                       <li>⭐ "询盘回复" - 粘贴客户邮件，AI 帮你回</li>
                       <li>⭐ "我的客户" - 管理跟进状态</li>
-                      <li>多语言支持 - 15 种语言覆盖全球市场</li>
+                      <li>⭐ 多语言支持 - 15 种语言覆盖全球市场</li>
                     </ol>
                   </div>
                 </div>
