@@ -77,21 +77,22 @@ export default function OverviewPage() {
             <div className={`w-8 h-8 rounded-lg ${s.bg} flex items-center justify-center mb-2`}>
               <div className={`w-2 h-2 rounded-full ${s.color.replace("text", "bg")}`} />
             </div>
-            <div className={`text-2xl font-bold ${s.color}`}>{s.value}</div>
-            <div className="text-xs text-gray-500 mt-0.5">{s.label}</div>
-            <div className="text-[10px] text-gray-400 mt-1">{s.sub}</div>
+            <div className={`text-xl sm:text-2xl font-bold ${s.color}`}>{s.value}</div>
+            <div className="text-[11px] sm:text-xs text-gray-500 mt-0.5">{s.label}</div>
+            <div className="text-[10px] text-gray-400 mt-0.5 sm:mt-1">{s.sub}</div>
           </div>
         ))}
       </div>
 
       {/* 14-day activity chart */}
-      <div className="bg-white rounded-xl border border-gray-100 p-5 sm:p-6 mb-6">
+      <div className="bg-white rounded-xl border border-gray-100 p-4 sm:p-6 mb-6">
         <h3 className="text-sm font-semibold text-gray-700 mb-4">近 14 天活动趋势</h3>
-        <div className="flex items-end gap-1 sm:gap-1.5 h-32">
+        <div className="overflow-x-auto -mx-4 sm:mx-0">
+          <div className="flex items-end gap-0.5 sm:gap-1.5 h-32 min-w-[400px] px-4 sm:px-0">
           {stats.dailyTimeline.map((d: any, i: number) => {
-            const h = Math.max(((d.emails + d.customers) / timelineMax) * 100, 4);
+            const showLabel = i === 0 || i === 6 || i === 13 || i % 2 === 0;
             return (
-              <div key={i} className="flex-1 flex flex-col items-center gap-1 group relative">
+              <div key={i} className="flex-1 flex flex-col items-center gap-1 group relative min-w-[16px]">
                 <div className="w-full flex flex-col justify-end gap-0.5" style={{ height: "100px" }}>
                   {d.emails > 0 && (
                     <div className="w-full bg-blue-400 rounded-t group-hover:bg-blue-500 transition-colors" style={{ height: `${Math.max((d.emails / timelineMax) * 100, 4)}%` }} title={`${d.emails} 封邮件`} />
@@ -100,10 +101,12 @@ export default function OverviewPage() {
                     <div className="w-full bg-indigo-300 rounded-t group-hover:bg-indigo-400 transition-colors" style={{ height: `${Math.max((d.customers / timelineMax) * 100, 4)}%` }} title={`${d.customers} 个客户`} />
                   )}
                 </div>
-                <span className="text-[9px] text-gray-400 whitespace-nowrap">{d.date.slice(5)}</span>
+                {showLabel && <span className="text-[9px] text-gray-400 whitespace-nowrap hidden sm:block">{d.date.slice(5)}</span>}
+                {showLabel && <span className="text-[8px] text-gray-400 whitespace-nowrap sm:hidden">{d.date.slice(8)}</span>}
               </div>
             );
           })}
+          </div>
         </div>
         <div className="flex items-center gap-4 mt-3 text-[10px] text-gray-400">
           <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 bg-blue-400 rounded-sm"/> 邮件</span>
@@ -124,9 +127,9 @@ export default function OverviewPage() {
               { label: "已报价", count: stats.statusBreakdown?.quoted || 0, color: "bg-purple-500", pct: stats.totalCustomers > 0 ? ((stats.statusBreakdown?.quoted || 0) / stats.totalCustomers * 100).toFixed(0) : 0 },
               { label: "已成交", count: stats.statusBreakdown?.won || 0, color: "bg-amber-500", pct: stats.totalCustomers > 0 ? ((stats.statusBreakdown?.won || 0) / stats.totalCustomers * 100).toFixed(0) : 0 },
             ].map((f, fi) => (
-              <div key={fi} className="flex items-center gap-3">
-                <span className="text-xs text-gray-500 w-14 text-right">{f.label}</span>
-                <div className="flex-1 h-6 bg-gray-50 rounded-full overflow-hidden">
+              <div key={fi} className="flex items-center gap-2 sm:gap-3">
+                <span className="text-[11px] sm:text-xs text-gray-500 w-10 sm:w-14 text-right">{f.label}</span>
+                <div className="flex-1 h-5 sm:h-6 bg-gray-50 rounded-full overflow-hidden">
                   <div className={`h-full ${f.color} rounded-full flex items-center justify-end pr-2 text-[10px] text-white font-medium transition-all`} style={{ width: `${Math.max(Number(f.pct), 5)}%` }}>
                     {f.count}
                   </div>
@@ -152,10 +155,10 @@ export default function OverviewPage() {
                   const event = new CustomEvent("changeTab", { detail: a.tab });
                   window.dispatchEvent(event);
                 }}
-                className={`p-4 rounded-xl bg-gradient-to-br ${a.color} border text-left hover:shadow-sm transition-all`}
+                className={`p-3 sm:p-4 rounded-xl bg-gradient-to-br ${a.color} border text-left hover:shadow-sm transition-all`}
               >
-                <div className="text-sm font-semibold">{a.label}</div>
-                <div className="text-xs opacity-70 mt-0.5">{a.desc}</div>
+                <div className="text-xs sm:text-sm font-semibold">{a.label}</div>
+                <div className="text-[10px] sm:text-xs opacity-70 mt-0.5">{a.desc}</div>
               </button>
             ))}
           </div>

@@ -75,16 +75,16 @@ export default function PipelinePage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4 sm:mb-6">
         <div>
           <h2 className="text-lg font-semibold text-gray-900">Pipeline 看板</h2>
-          <p className="text-sm text-gray-500">拖拽客户卡片更新状态</p>
+          <p className="text-xs sm:text-sm text-gray-500">拖拽客户卡片更新状态</p>
         </div>
-        <div className="flex items-center gap-4 text-sm">
-          <span className="text-gray-500">总计 <b className="text-gray-900">{total}</b> 客户</span>
-          <span className="text-gray-500">成交 <b className="text-green-600">{won}</b></span>
-          <span className="text-gray-500">转化率 <b className="text-blue-600">{conversionRate}%</b></span>
-          <button onClick={fetchData} className="px-3 py-1 text-xs border border-gray-200 rounded-lg hover:bg-gray-50">刷新</button>
+        <div className="flex items-center gap-2 sm:gap-4 text-xs sm:text-sm flex-wrap">
+          <span className="text-gray-500 whitespace-nowrap">总计 <b className="text-gray-900">{total}</b></span>
+          <span className="text-gray-500 whitespace-nowrap">成交 <b className="text-green-600">{won}</b></span>
+          <span className="text-gray-500 whitespace-nowrap">转化率 <b className="text-blue-600">{conversionRate}%</b></span>
+          <button onClick={fetchData} className="px-2 py-0.5 sm:px-3 sm:py-1 text-xs border border-gray-200 rounded-lg hover:bg-gray-50">刷新</button>
         </div>
       </div>
 
