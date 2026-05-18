@@ -5,16 +5,34 @@ import { saveSearch } from "@/lib/store";
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { product, market = "United States", industry = "", limit = 10 } = body;
+    const {
+      product,
+      market = "United States",
+      industry = "",
+      limit = 10,
+      role = "",
+      companyType = "",
+      customQuery = "",
+      excludeKeywords = "",
+    } = body;
 
     if (!product) {
       return NextResponse.json({ success: false, message: "Product is required" }, { status: 400 });
     }
 
-    const results = await searchCustomers(product, market, industry, Math.min(limit, 50));
+    const results = await searchCustomers({
+      product,
+      market,
+      industry,
+      limit: Math.min(limit, 50),
+      role,
+      companyType,
+      customQuery,
+      excludeKeywords,
+    });
 
     saveSearch({
-      query: `${product} ${market} ${industry}`.trim(),
+      query: customQuery || `${product} ${market} ${industry} ${companyType} ${role}`.trim(),
       product,
       market,
       industry,

@@ -25,21 +25,53 @@ function scoreMatch(snippet: string, product: string): number {
   return Math.min(score, 99);
 }
 
-export async function searchCustomers(
-  product: string,
-  market: string,
-  industry = "",
-  limit = 10
-): Promise<SearchResult[]> {
+interface SearchOptions {
+  product: string;
+  market: string;
+  industry?: string;
+  limit?: number;
+  role?: string;
+  companyType?: string;
+  customQuery?: string;
+  excludeKeywords?: string;
+}
+
+export async function searchCustomers(opts: SearchOptions): Promise<SearchResult[]> {
+  const { product, market, industry = "", limit = 10, role = "", companyType = "", customQuery = "", excludeKeywords = "" } = opts;
+
   if (!SERPAPI_KEY) return mockSearch(product, market, industry, limit);
 
-  const query = `"${product}" distributor OR importer OR wholesaler in ${market} ${industry}`;
+  // Build query from advanced options
+  let query: string;
+  if (customQuery) {
+    query = customQuery;
+  } else {
+    const parts: string[] = [];
+    parts.push(`"${product}"`);
+    if (companyType) parts.push(companyType);
+    else parts.push("distributor OR importer OR wholesaler");
+    if (role) parts.push(role);
+    parts.push(`in ${market}`);
+    if (industry) parts.push(industry);
+    if (excludeKeywords) {
+      const excludes = excludeKeywords.split(",").map((k) => `-${k.trim()}`).join(" ");
+      parts.push(excludes);
+    }
+    query = parts.join(" ");
+  }
+
+  const geoMap: Record<string, string> = {
+    "United States": "us", "Germany": "de", "United Kingdom": "gb", "Australia": "au",
+    "Canada": "ca", "Japan": "jp", "France": "fr", "Brazil": "br", "UAE": "ae",
+    "Saudi Arabia": "sa", "South Korea": "kr", "Mexico": "mx", "India": "in",
+  };
+
   const params = new URLSearchParams({
     engine: "google",
     q: query.trim(),
     api_key: SERPAPI_KEY,
     num: String(Math.min(limit, 50)),
-    gl: "us",
+    gl: geoMap[market] || "us",
     hl: "en",
   });
 

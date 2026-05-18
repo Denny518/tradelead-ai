@@ -16,6 +16,10 @@ export interface SearchParams {
   market: string;
   industry?: string;
   limit?: number;
+  role?: string;
+  companyType?: string;
+  customQuery?: string;
+  excludeKeywords?: string;
 }
 
 export interface SearchResultItem {
@@ -265,7 +269,15 @@ export async function getMarketIntel(): Promise<any> {
   return request("/api/market-intel");
 }
 
-export async function analyzeMarket(params: { market: string; industry: string }): Promise<any> {
+export async function analyzeMarket(params: {
+  market: string;
+  industry: string;
+  keywords?: string;
+  compareMarket?: string;
+  dateRange?: string;
+  category?: string;
+  context?: string;
+}): Promise<any> {
   return request("/api/market-intel", { method: "POST", body: JSON.stringify(params) });
 }
 

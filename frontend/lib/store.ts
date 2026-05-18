@@ -379,10 +379,15 @@ export interface MarketIntelRecord {
   id: string;
   market: string;
   industry: string;
-  trend: string;
-  growthRate: number | null;
-  competitorData: any;
-  recommendation: string;
+  keywords?: string;
+  compareMarket?: string;
+  dateRange?: string;
+  trend?: string;
+  growthRate?: number | null;
+  competitorData?: any;
+  recommendation?: string;
+  trendData?: any;
+  analysis?: any;
   createdAt: string;
 }
 

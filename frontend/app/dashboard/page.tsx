@@ -53,15 +53,17 @@ export default function DashboardPage() {
   const [generatedEmails, setGeneratedEmails] = useState<Record<string, EmailVersion> | null>(null);
   const [selectedCustomer, setSelectedCustomer] = useState<SearchResultItem | null>(null);
   const [savedIds, setSavedIds] = useState<Set<number>>(new Set());
+  const [emailsGenerated, setEmailsGenerated] = useState<Set<number>>(new Set());
 
   // ── Handlers ────────────────────────────────────────────────
 
   const handleSearch = useCallback(
-    async (params: { product: string; market: string; industry: string; limit: number }) => {
+    async (params: { product: string; market: string; industry: string; limit: number; role: string; companyType: string; customQuery: string; excludeKeywords: string }) => {
       setSearchLoading(true);
       setSearchResults([]);
       setEmailResults({});
       setSavedIds(new Set());
+      setEmailsGenerated(new Set());
       try {
         const res = await searchCustomers(params);
         setSearchResults(res.data || []);
@@ -93,6 +95,8 @@ export default function DashboardPage() {
 
   const handleGenerateEmail = useCallback(
     async (item: SearchResultItem) => {
+      const idx = searchResults.indexOf(item);
+      setEmailsGenerated((prev) => new Set(prev).add(idx));
       setSelectedCustomer(item);
       setEmailModalOpen(true);
       setGeneratingEmail(true);
@@ -288,6 +292,7 @@ export default function DashboardPage() {
                 findingEmail={findingEmail}
                 emailResults={emailResults}
                 savedIds={savedIds}
+                emailsGenerated={emailsGenerated}
               />
             </div>
           )}
