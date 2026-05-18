@@ -32,12 +32,25 @@ export default function DashboardPage() {
 
   // Product knowledge
   const [productKnowledge, setProductKnowledge] = useState<ProductKnowledge | null>(null);
+  const [pkChecked, setPkChecked] = useState(false);
 
   useEffect(() => {
     getProductKnowledge().then((res) => {
-      if (res.data) setProductKnowledge(res.data);
+      if (res.data) {
+        setProductKnowledge(res.data);
+        if (!pkChecked) setPkChecked(true);
+      } else {
+        setProductKnowledge(null);
+        if (!pkChecked) {
+          // First visit — redirect to knowledge page
+          setActiveTab("knowledge");
+          setPkChecked(true);
+        }
+      }
     });
   }, [activeTab]); // Refresh when switching tabs
+
+  const hasKnowledge = productKnowledge && productKnowledge.productName;
 
   // Search state
   const [searchLoading, setSearchLoading] = useState(false);
@@ -221,7 +234,21 @@ export default function DashboardPage() {
       <Sidebar activeTab={activeTab} onTabChange={setActiveTab} />
 
       <main className="flex-1 overflow-y-auto bg-gray-50">
-        <div className="max-w-6xl mx-auto px-8 py-8">
+        <div className="max-w-6xl mx-auto px-4 sm:px-8 py-4 sm:py-8">
+          {/* Product Knowledge missing banner */}
+          {!hasKnowledge && activeTab !== "knowledge" && (
+            <div className="mb-4 p-4 bg-amber-50 border border-amber-200 rounded-xl flex items-start gap-3">
+              <span className="text-xl flex-shrink-0">⚠️</span>
+              <div className="flex-1">
+                <p className="text-sm font-semibold text-amber-800">产品知识库尚未配置</p>
+                <p className="text-xs text-amber-600 mt-0.5">AI 需要先了解你的公司和产品信息，才能写出精准的邮件和报价。请先完善产品知识库。</p>
+              </div>
+              <button onClick={() => setActiveTab("knowledge")} className="px-3 py-1.5 text-xs font-medium bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors whitespace-nowrap">
+                立即配置
+              </button>
+            </div>
+          )}
+
           {/* Overview */}
           {activeTab === "overview" && (
             <div>

@@ -8,13 +8,58 @@ const MARKETS = [
   "France", "Brazil", "UAE", "Saudi Arabia", "South Korea", "Mexico", "India",
   "Southeast Asia", "Italy", "Spain", "Netherlands", "Turkey", "Poland",
   "Thailand", "Vietnam", "Russia", "Indonesia", "South Africa", "Nigeria",
+  "Argentina", "Chile", "Colombia", "Peru", "Egypt", "Kenya", "Philippines",
+  "Malaysia", "Singapore", "Hong Kong", "Taiwan", "Pakistan", "Bangladesh",
+  "Iran", "Israel", "Sweden", "Norway", "Denmark", "Finland", "Switzerland",
+  "Austria", "Belgium", "Portugal", "Greece", "Czech Republic", "Romania",
+  "Ukraine", "Kazakhstan", "Morocco", "Ghana", "Ethiopia", "Tanzania",
 ];
 
 const INDUSTRIES = [
-  "LED Display", "Electronics", "Textile & Apparel", "Industrial Machinery",
-  "Consumer Goods", "Medical Devices", "Auto Parts", "Solar Energy",
-  "Building Materials", "Furniture", "Packaging", "Food & Beverage",
-  "Chemical Products", "Sports Equipment", "Beauty & Personal Care",
+  // Electronics & Technology
+  "LED Display", "Consumer Electronics", "Semiconductors", "Telecom Equipment",
+  "Computer Hardware", "Security & Surveillance", "IoT Devices", "Wearables",
+  // Apparel & Textiles
+  "Textile & Apparel", "Fashion Accessories", "Footwear", "Home Textiles",
+  "Sportswear", "Luggage & Bags", "Fabric & Raw Materials",
+  // Machinery & Industrial
+  "Industrial Machinery", "Construction Equipment", "Agricultural Machinery",
+  "Packaging Machinery", "Printing Equipment", "Pumps & Valves",
+  "Electric Motors", "Generators", "Machine Tools", "Mining Equipment",
+  // Consumer Goods
+  "Consumer Goods", "Home Appliances", "Kitchenware", "Houseware",
+  "Toys & Games", "Stationery", "Gifts & Crafts", "Pet Products",
+  // Medical & Healthcare
+  "Medical Devices", "Medical Consumables", "Laboratory Equipment",
+  "Dental Equipment", "Healthcare Supplies", "Pharmaceuticals",
+  // Automotive & Transportation
+  "Auto Parts", "Electric Vehicles", "Motorcycle Parts", "Bicycle & E-bike",
+  "Marine Equipment", "Aviation Parts", "Railway Equipment",
+  // Energy & Environment
+  "Solar Energy", "Wind Energy", "Energy Storage", "LED Lighting",
+  "Water Treatment", "Waste Management", "Environmental Equipment",
+  // Building & Construction
+  "Building Materials", "Hardware & Tools", "Plumbing Supplies",
+  "Electrical Supplies", "Flooring", "Doors & Windows", "Prefab Housing",
+  // Furniture & Home
+  "Furniture", "Office Furniture", "Outdoor Furniture", "Mattress & Bedding",
+  "Lighting Fixtures", "Home Decor", "Garden Supplies",
+  // Food & Agriculture
+  "Food & Beverage", "Agricultural Products", "Seafood", "Organic Food",
+  "Food Processing Equipment", "Food Packaging", "Beverage Equipment",
+  // Beauty & Personal Care
+  "Beauty & Personal Care", "Cosmetics", "Skincare", "Hair Products",
+  "Personal Protective Equipment",
+  // Chemicals & Materials
+  "Chemical Products", "Plastics & Polymers", "Rubber Products",
+  "Adhesives & Sealants", "Paints & Coatings", "Metal Products",
+  // Sports & Outdoor
+  "Sports Equipment", "Fitness Equipment", "Outdoor Gear", "Camping Equipment",
+  // Packaging & Printing
+  "Packaging Materials", "Paper Products", "Label & Tag",
+  // Other
+  "Jewelry & Watches", "Musical Instruments", "Baby Products",
+  "Smart Home", "Robotics", "Drone & UAV", "3D Printing",
 ];
 
 const CATEGORIES = [
@@ -26,6 +71,18 @@ const CATEGORIES = [
   { value: "Medical Devices", label: "医疗器械" },
   { value: "Auto Parts", label: "汽车配件" },
   { value: "Business & Industrial", label: "工商业" },
+  { value: "Energy", label: "能源环保" },
+  { value: "Construction", label: "建筑建材" },
+  { value: "Furniture", label: "家具家居" },
+  { value: "Food & Agriculture", label: "食品农业" },
+  { value: "Beauty & Personal Care", label: "美容个护" },
+  { value: "Chemicals", label: "化工材料" },
+  { value: "Sports", label: "运动户外" },
+  { value: "Packaging", label: "包装印刷" },
+  { value: "Jewelry", label: "珠宝钟表" },
+  { value: "Healthcare", label: "医疗健康" },
+  { value: "Automotive", label: "汽车交通" },
+  { value: "Apparel", label: "服装鞋帽" },
 ];
 
 const DATE_RANGES = [
@@ -103,15 +160,15 @@ export default function MarketIntelPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">目标市场 *</label>
-            <select value={market} onChange={(e) => setMarket(e.target.value)} className={inputClass}>
-              {MARKETS.map((m) => <option key={m} value={m}>{m}</option>)}
-            </select>
+            <input type="text" value={market} onChange={(e) => setMarket(e.target.value)} list="markets-list" placeholder="搜索或输入自定义..." className={inputClass} />
+            <datalist id="markets-list">{MARKETS.map((m) => <option key={m} value={m} />)}</datalist>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">行业/产品 *</label>
-            <select value={industry} onChange={(e) => setIndustry(e.target.value)} className={inputClass}>
-              {INDUSTRIES.map((i) => <option key={i} value={i}>{i}</option>)}
-            </select>
+            <input type="text" value={industry} onChange={(e) => setIndustry(e.target.value)} list="industries-list" placeholder="搜索或输入自定义行业..." className={inputClass} />
+            <datalist id="industries-list">
+              {INDUSTRIES.map((i) => <option key={i} value={i} />)}
+            </datalist>
           </div>
         </div>
 
