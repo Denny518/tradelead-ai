@@ -27,12 +27,37 @@ export interface SearchResultItem {
   website: string;
   description: string;
   match_score: number;
+  source?: string;        // google, google_maps, google_local, google_shopping, google_news, bing
+  phone?: string;
+  address?: string;
+  rating?: number;
+  reviews_count?: number;
+  price?: string;
+  link?: string;
+}
+
+export interface SearchParams {
+  product: string;
+  market: string;
+  industry?: string;
+  limit?: number;
+  role?: string;
+  companyType?: string;
+  customQuery?: string;
+  excludeKeywords?: string;
+  engine?: string;            // google | google_maps | google_local | google_shopping | google_news | bing | all
+  mapsLocation?: string;      // Maps/Local: specific city or address
+  mapsRadius?: string;        // Maps: search radius
+  shoppingPriceRange?: string;// Shopping: "50-200"
+  newsTimeframe?: string;     // News: "d","w","m","y"
+  bingMarket?: string;        // Bing: market code "en-US"
 }
 
 export interface SearchResponse {
   success: boolean;
   data: SearchResultItem[];
   count: number;
+  engine?: string;
 }
 
 export async function searchCustomers(params: SearchParams): Promise<SearchResponse> {

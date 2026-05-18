@@ -29,16 +29,22 @@ const COMPANY_TYPES = [
   { value: "agent", label: "代理商 (Agent)" },
 ];
 
+const ENGINES = [
+  { value: "google", label: "Google 搜索", icon: "🔍", desc: "通用网页搜索，覆盖面最广" },
+  { value: "all", label: "全部引擎", icon: "🚀", desc: "并行搜索所有引擎，最全面" },
+  { value: "google_maps", label: "Google Maps", icon: "📍", desc: "按地理位置搜索实体商家" },
+  { value: "google_local", label: "Google Local", icon: "🏪", desc: "本地商家+评分+电话+地址" },
+  { value: "google_shopping", label: "Google Shopping", icon: "🛒", desc: "搜目标市场谁在卖同类产品" },
+  { value: "google_news", label: "Google News", icon: "📰", desc: "行业新闻中提取公司信息" },
+  { value: "bing", label: "Bing 搜索", icon: "🔎", desc: "交叉验证，覆盖不同数据源" },
+];
+
 interface SearchFormProps {
   onSearch: (params: {
-    product: string;
-    market: string;
-    industry: string;
-    limit: number;
-    role: string;
-    companyType: string;
-    customQuery: string;
-    excludeKeywords: string;
+    product: string; market: string; industry: string; limit: number;
+    role: string; companyType: string; customQuery: string; excludeKeywords: string;
+    engine: string; mapsLocation: string; mapsRadius: string; shoppingPriceRange: string;
+    newsTimeframe: string; bingMarket: string;
   }) => void;
   loading: boolean;
 }
@@ -52,20 +58,21 @@ export default function SearchForm({ onSearch, loading }: SearchFormProps) {
   const [companyType, setCompanyType] = useState("");
   const [customQuery, setCustomQuery] = useState("");
   const [excludeKeywords, setExcludeKeywords] = useState("");
+  const [engine, setEngine] = useState("google");
+  const [mapsLocation, setMapsLocation] = useState("");
+  const [mapsRadius, setMapsRadius] = useState("");
+  const [shoppingPriceRange, setShoppingPriceRange] = useState("");
+  const [newsTimeframe, setNewsTimeframe] = useState("");
+  const [bingMarket, setBingMarket] = useState("");
   const [showAdvanced, setShowAdvanced] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!product.trim()) return;
     onSearch({
-      product: product.trim(),
-      market,
-      industry: industry.trim(),
-      limit,
-      role,
-      companyType: companyType,
-      customQuery: customQuery.trim(),
-      excludeKeywords: excludeKeywords.trim(),
+      product: product.trim(), market, industry: industry.trim(), limit,
+      role, companyType, customQuery: customQuery.trim(), excludeKeywords: excludeKeywords.trim(),
+      engine, mapsLocation, mapsRadius, shoppingPriceRange, newsTimeframe, bingMarket,
     });
   };
 
@@ -82,6 +89,31 @@ export default function SearchForm({ onSearch, loading }: SearchFormProps) {
         >
           {showAdvanced ? "收起高级选项" : "展开高级选项"}
         </button>
+      </div>
+
+      {/* Engine Selector */}
+      <div className="mb-5">
+        <label className="block text-sm font-medium text-gray-700 mb-2">搜索引擎</label>
+        <div className="grid grid-cols-4 md:grid-cols-7 gap-2">
+          {ENGINES.map((eng) => (
+            <button
+              key={eng.value}
+              type="button"
+              onClick={() => setEngine(eng.value)}
+              className={`p-2 rounded-xl border-2 text-center transition-all ${
+                engine === eng.value
+                  ? "border-primary bg-blue-50 shadow-sm"
+                  : "border-gray-200 hover:border-gray-300 bg-white"
+              }`}
+            >
+              <div className="text-lg">{eng.icon}</div>
+              <div className="text-[10px] font-medium text-gray-700 mt-0.5">{eng.label}</div>
+            </button>
+          ))}
+        </div>
+        <p className="text-xs text-gray-400 mt-1.5">
+          {ENGINES.find((e) => e.value === engine)?.desc || ""}
+        </p>
       </div>
 
       {/* Basic fields — always visible */}
@@ -165,6 +197,51 @@ export default function SearchForm({ onSearch, loading }: SearchFormProps) {
               className={inputClass + " resize-none font-mono text-xs"}
             />
             <p className="text-xs text-gray-400 mt-1">高级用户可直接输入 Google 搜索语句，留空则自动生成搜索词</p>
+          </div>
+
+          {/* Engine-specific filters */}
+          <div className="p-4 bg-gray-50 rounded-xl mt-4">
+            <div className="text-xs font-semibold text-gray-500 mb-3 uppercase tracking-wider">引擎专属参数</div>
+
+            {(engine === "google_maps" || engine === "google_local" || engine === "all") && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+                <div>
+                  <label className="block text-xs text-gray-600 mb-1">地理位置（城市/地址）</label>
+                  <input value={mapsLocation} onChange={(e) => setMapsLocation(e.target.value)} placeholder="例：Los Angeles, CA" className={inputClass} />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-600 mb-1">搜索半径</label>
+                  <select value={mapsRadius} onChange={(e) => setMapsRadius(e.target.value)} className={inputClass}>
+                    <option value="">默认</option><option value="10km">10 km</option><option value="25km">25 km</option><option value="50km">50 km</option><option value="100km">100 km</option>
+                  </select>
+                </div>
+              </div>
+            )}
+
+            {(engine === "google_shopping" || engine === "all") && (
+              <div className="mb-3">
+                <label className="block text-xs text-gray-600 mb-1">价格范围</label>
+                <input value={shoppingPriceRange} onChange={(e) => setShoppingPriceRange(e.target.value)} placeholder="例：50-200" className={inputClass + " max-w-xs"} />
+              </div>
+            )}
+
+            {(engine === "google_news" || engine === "all") && (
+              <div className="mb-3">
+                <label className="block text-xs text-gray-600 mb-1">时间范围</label>
+                <select value={newsTimeframe} onChange={(e) => setNewsTimeframe(e.target.value)} className={inputClass + " max-w-xs"}>
+                  <option value="">不限</option><option value="d">1天</option><option value="w">1周</option><option value="m">1月</option><option value="y">1年</option>
+                </select>
+              </div>
+            )}
+
+            {(engine === "bing" || engine === "all") && (
+              <div className="mb-3">
+                <label className="block text-xs text-gray-600 mb-1">Bing 市场</label>
+                <select value={bingMarket} onChange={(e) => setBingMarket(e.target.value)} className={inputClass + " max-w-xs"}>
+                  <option value="">跟随目标市场</option><option value="en-US">US</option><option value="en-GB">UK</option><option value="de-DE">DE</option><option value="fr-FR">FR</option><option value="ja-JP">JP</option>
+                </select>
+              </div>
+            )}
           </div>
         </div>
       )}

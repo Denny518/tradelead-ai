@@ -6,6 +6,13 @@ export interface SearchResult {
   website: string;
   description: string;
   match_score: number;
+  source?: string;
+  phone?: string;
+  address?: string;
+  rating?: number;
+  reviews_count?: number;
+  price?: string;
+  link?: string;
 }
 
 function extractCompanyName(title: string): string {
@@ -86,7 +93,8 @@ export async function searchCustomers(opts: SearchOptions): Promise<SearchResult
       website: item.link || "",
       description: item.snippet || "",
       match_score: scoreMatch(item.snippet || "", product),
-    });
+      source: "google",
+    } as SearchResult);
   }
   return results;
 }
@@ -120,9 +128,7 @@ const DEFAULT_MOCK: Array<[string, string, string]> = [
 function mockSearch(product: string, market: string, industry = "", limit = 10): SearchResult[] {
   const source = MOCK_DATA[product] || DEFAULT_MOCK;
   return source.slice(0, limit).map((item, i) => ({
-    company_name: item[0],
-    website: item[1],
-    description: item[2],
-    match_score: 88 - i * 3,
+    company_name: item[0], website: item[1], description: item[2],
+    match_score: 88 - i * 3, source: "google",
   }));
 }

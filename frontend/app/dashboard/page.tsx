@@ -58,7 +58,7 @@ export default function DashboardPage() {
   // ── Handlers ────────────────────────────────────────────────
 
   const handleSearch = useCallback(
-    async (params: { product: string; market: string; industry: string; limit: number; role: string; companyType: string; customQuery: string; excludeKeywords: string }) => {
+    async (params: { product: string; market: string; industry: string; limit: number; role: string; companyType: string; customQuery: string; excludeKeywords: string; engine: string; mapsLocation: string; mapsRadius: string; shoppingPriceRange: string; newsTimeframe: string; bingMarket: string }) => {
       setSearchLoading(true);
       setSearchResults([]);
       setEmailResults({});

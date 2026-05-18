@@ -2,6 +2,25 @@
 
 import { SearchResultItem } from "@/lib/api";
 
+const SOURCE_BADGES: Record<string, { label: string; color: string }> = {
+  google: { label: "Google", color: "bg-blue-50 text-blue-700" },
+  google_maps: { label: "Maps", color: "bg-green-50 text-green-700" },
+  google_local: { label: "Local", color: "bg-teal-50 text-teal-700" },
+  google_shopping: { label: "Shopping", color: "bg-orange-50 text-orange-700" },
+  google_news: { label: "News", color: "bg-purple-50 text-purple-700" },
+  bing: { label: "Bing", color: "bg-cyan-50 text-cyan-700" },
+};
+
+function SourceBadge({ source }: { source?: string }) {
+  const badge = source ? SOURCE_BADGES[source] : null;
+  if (!badge) return null;
+  return (
+    <span className={`px-1.5 py-0.5 text-[10px] font-medium rounded ${badge.color}`}>
+      {badge.label}
+    </span>
+  );
+}
+
 interface SearchResultsProps {
   results: SearchResultItem[];
   onFindEmail: (website: string) => void;
@@ -79,7 +98,13 @@ export default function SearchResults({
                 return (
                   <tr key={idx} className={`hover:bg-gray-50/50 transition-colors ${emails?.length ? "bg-green-50/30" : ""} ${emailGenerated ? "bg-blue-50/20" : ""}`}>
                     <td className="px-4 py-4">
-                      <div className="font-medium text-gray-900">{item.company_name}</div>
+                      <div className="font-medium text-gray-900 flex items-center gap-1.5 flex-wrap">
+                        {item.company_name}
+                        <SourceBadge source={item.source} />
+                      </div>
+                      {item.address && <div className="text-[11px] text-gray-400 mt-0.5">{item.address}</div>}
+                      {item.phone && <div className="text-[11px] text-gray-400">{item.phone}</div>}
+                      {item.rating ? <div className="text-[11px] text-yellow-600 mt-0.5">★ {item.rating} ({item.reviews_count} reviews)</div> : null}
                     </td>
                     <td className="px-4 py-4">
                       <a href={item.website} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline text-xs">
