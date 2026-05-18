@@ -182,30 +182,22 @@ export function exportCustomersCSVUrl(status?: string): string {
 // ── Product Knowledge ─────────────────────────────────────────
 
 export interface ProductKnowledge {
-  id?: string;
-  userId?: string;
-  productName: string;
-  basicInfo?: {
-    applicationScenarios: string[];
-    targetCustomers: string[];
-    competitors: string[];
-  };
-  sellingPoints?: {
-    priceAdvantage: string;
-    qualityAdvantage: string;
-    deliveryAdvantage: string;
-    serviceAdvantage: string;
-  };
-  techSpecs?: Record<string, string>;
-  caseStudies?: Array<{
-    customer: string;
-    industry: string;
-    painPoint: string;
-    solution: string;
-    result: string;
-  }>;
-  faq?: Array<{ question: string; answer: string }>;
-  emailStyle?: string;
+  id?: string; userId?: string;
+  productName: string; productCategory?: string; brandName?: string;
+  companyYearFounded?: string; companyLocation?: string; companyScale?: string; annualRevenue?: string;
+  productSummary?: string; detailedDescription?: string; uniqueSellingProposition?: string;
+  productImages?: string[]; productVideos?: string[]; catalogUrl?: string; websiteUrl?: string; linkedinUrl?: string;
+  basicInfo?: { applicationScenarios: string[]; targetCustomers: string[]; competitors: string[]; };
+  sellingPoints?: { priceAdvantage: string; qualityAdvantage: string; deliveryAdvantage: string; serviceAdvantage: string; };
+  techSpecs?: Record<string, string>; certifications?: string[]; patents?: string[];
+  hsCode?: string; moq?: string; samplePolicy?: string; packagingInfo?: string; shippingMethods?: string[]; leadTime?: string; paymentTerms?: string[]; acceptedCurrencies?: string[]; incoterms?: string[];
+  priceRange?: string; bulkDiscountPolicy?: string; oemOdmPolicy?: string;
+  qualityControlProcess?: string; afterSalesService?: string; warrantyPolicy?: string; returnPolicy?: string;
+  caseStudies?: Array<{ customer: string; industry: string; country?: string; painPoint: string; solution: string; result: string; testimonial?: string; }>;
+  totalCustomersServed?: string; countriesExportedTo?: string[]; annualExportVolume?: string; keyClients?: string[]; exhibitionHistory?: string[];
+  faq?: Array<{ question: string; answer: string; }>;
+  emailStyle?: string; targetIndustries?: string[]; competitorAdvantages?: string;
+  customSections?: Array<{ title: string; content: string; }>;
 }
 
 export async function getProductKnowledge(): Promise<{ success: boolean; data: ProductKnowledge | null }> {
