@@ -77,12 +77,15 @@ export interface FindEmailItem {
 export interface FindEmailResponse {
   success: boolean;
   data: FindEmailItem[];
+  message?: string;
+  note?: string;
+  needsManualDomain?: boolean;
 }
 
-export async function findEmail(companyDomain: string): Promise<FindEmailResponse> {
+export async function findEmail(companyDomain: string, companyName?: string, address?: string): Promise<FindEmailResponse> {
   return request("/api/find-email", {
     method: "POST",
-    body: JSON.stringify({ company_domain: companyDomain }),
+    body: JSON.stringify({ company_domain: companyDomain, company_name: companyName || "", address: address || "" }),
   });
 }
 

@@ -9,7 +9,7 @@ const PERIODS = [
   { value: "month", label: "本月" },
 ];
 
-export default function OverviewPage({ hasKnowledge, onGoKnowledge }: { hasKnowledge: boolean; onGoKnowledge: () => void }) {
+export default function OverviewPage() {
   const [period, setPeriod] = useState("month");
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -69,20 +69,6 @@ export default function OverviewPage({ hasKnowledge, onGoKnowledge }: { hasKnowl
           ))}
         </div>
       </div>
-
-      {/* Knowledge reminder */}
-      {!hasKnowledge && (
-        <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-xl flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="text-lg">⚠️</span>
-            <div>
-              <p className="text-sm font-semibold text-amber-800">完善产品知识库，让 AI 更懂你的产品</p>
-              <p className="text-xs text-amber-600">填写后 AI 邮件和报价质量将大幅提升</p>
-            </div>
-          </div>
-          <button onClick={onGoKnowledge} className="px-4 py-2 text-xs font-medium bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors whitespace-nowrap">去配置</button>
-        </div>
-      )}
 
       {/* Stat cards grid */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">

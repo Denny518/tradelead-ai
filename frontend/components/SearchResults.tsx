@@ -23,14 +23,17 @@ function SourceBadge({ source }: { source?: string }) {
 
 interface SearchResultsProps {
   results: SearchResultItem[];
-  onFindEmail: (website: string) => void;
+  onFindEmail: (website: string, companyName: string, address?: string) => void;
   onGenerateEmail: (item: SearchResultItem) => void;
   onSaveToCRM: (item: SearchResultItem) => void;
   findingEmail: string | null;
-  emailResults: Record<string, { name: string; email: string; position: string }[]>;
+  emailResults: Record<string, { name: string; email: string; position: string; note?: string }[]>;
   savedIds: Set<number>;
   emailsGenerated: Set<number>;
 }
+
+// Engines where email lookup is NOT possible (no company domain context)
+const EMAIL_UNAVAILABLE_ENGINES = ["google_shopping", "google_news"];
 
 export default function SearchResults({
   results,
@@ -90,7 +93,11 @@ export default function SearchResults({
             <tbody className="divide-y divide-gray-50">
               {results.map((item, idx) => {
                 const domain = extractDomain(item.website);
-                const emails = emailResults[domain];
+                // Key for email lookup: use domain if available, otherwise company name
+                const emailKey = domain || item.company_name;
+                const emails = emailResults[emailKey] || (domain ? emailResults[domain] : null);
+                const canFindEmail = !EMAIL_UNAVAILABLE_ENGINES.includes(item.source || "");
+                const isGoogleMaps = item.source === "google_maps" || item.source === "google_local";
                 const isSaved = savedIds.has(idx);
                 const emailGenerated = emailsGenerated.has(idx);
 
@@ -133,13 +140,18 @@ export default function SearchResults({
                         {/* Step 2: Find Email */}
                         {emails?.length ? (
                           <span className="w-5 h-5 rounded-full bg-green-500 text-white flex items-center justify-center text-[10px] font-bold" title="邮箱已找到">2</span>
+                        ) : !canFindEmail ? (
+                          <span className="px-1.5 py-1 text-[10px] font-medium text-gray-400 bg-gray-100 rounded cursor-not-allowed whitespace-nowrap" title={`${item.source === "google_shopping" ? "Shopping 结果返回商品链接，无公司域名" : "News 结果返回新闻链接，无公司网站"}`}>
+                            不支持邮箱查找
+                          </span>
                         ) : (
                           <button
-                            onClick={() => onFindEmail(domain)}
+                            onClick={() => onFindEmail(domain, item.company_name, item.address)}
                             disabled={findingEmail === domain}
                             className="px-2 py-1.5 text-[11px] font-medium text-blue-600 bg-blue-50 rounded-md hover:bg-blue-100 disabled:opacity-50 transition-colors whitespace-nowrap"
+                            title={!domain && isGoogleMaps ? "此商家未列官网，将自动搜索其网站" : ""}
                           >
-                            {findingEmail === domain ? "查找中..." : "找邮箱"}
+                            {findingEmail === domain ? "查找中..." : !domain ? "搜官网+找邮箱" : "找邮箱"}
                           </button>
                         )}
                         <span className="text-gray-300 mx-0.5">→</span>

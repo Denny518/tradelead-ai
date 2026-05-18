@@ -144,12 +144,17 @@ export default function DashboardPage() {
   );
 
   const handleFindEmail = useCallback(
-    async (domain: string) => {
-      if (emailResults[domain]) return;
-      setFindingEmail(domain);
+    async (domain: string, companyName?: string, address?: string) => {
+      const key = domain || companyName || "";
+      if (!key || emailResults[key]) return;
+      setFindingEmail(key);
       try {
-        const res = await findEmail(domain);
-        setEmailResults((prev) => ({ ...prev, [domain]: res.data || [] }));
+        const res = await findEmail(domain, companyName, address);
+        if (res.success) {
+          setEmailResults((prev) => ({ ...prev, [key]: res.data || [] }));
+        } else if (res.needsManualDomain) {
+          alert(res.message || "未找到公司域名");
+        }
       } catch (err) {
         console.error("Find email failed:", err);
       } finally {
@@ -342,7 +347,7 @@ export default function DashboardPage() {
           )}
 
           {/* Overview */}
-          {activeTab === "overview" && <OverviewPage hasKnowledge={hasKnowledge} onGoKnowledge={() => setActiveTab("knowledge")} />}
+          {activeTab === "overview" && <OverviewPage />}
 
           {/* Search */}
           {activeTab === "search" && (

@@ -61,7 +61,47 @@ function scoreMatch(text: string, product: string): number {
   return Math.min(score, 99);
 }
 
-// ── Google Local Search (Ad Results + Local Results + Discover More Places) ─
+// ── Helper: extract real website from various Maps/Local fields ──
+function extractWebsite(item: any): string {
+  // Priority 1: Direct website field (company's actual URL)
+  if (item.website && !item.website.includes("google.com") && !item.website.includes("maps/place")) {
+    return item.website;
+  }
+  // Priority 2: Some results have website_link
+  if (item.website_link && !item.website_link.includes("google.com")) {
+    return item.website_link;
+  }
+  // Priority 3: Check if "link" is actually a company website, not a maps link
+  if (item.link && !item.link.includes("google.com/maps") && !item.link.includes("maps/place")) {
+    return item.link;
+  }
+  return "";
+}
+
+// ── Try to find website via quick Google search ────────────────
+export async function findCompanyWebsite(companyName: string, location?: string): Promise<string | null> {
+  if (!SERPAPI_KEY) return null;
+  const q = `${companyName} ${location || ""} official website`.trim();
+  const params = new URLSearchParams({
+    engine: "google",
+    q,
+    api_key: SERPAPI_KEY,
+    num: "1",
+    hl: "en",
+  });
+  try {
+    const resp = await fetch(`${BASE}?${params}`);
+    if (!resp.ok) return null;
+    const data = await resp.json();
+    const firstLink = data.organic_results?.[0]?.link;
+    if (firstLink) {
+      try { return new URL(firstLink).hostname.replace(/^www\./, ""); } catch { return firstLink; }
+    }
+  } catch {}
+  return null;
+}
+
+// ── Google Local Search ────────────────────────────────────────
 async function searchLocal(opts: SearchOptions): Promise<SearchResult[]> {
   if (!SERPAPI_KEY) return [];
   const q = opts.customQuery || `${opts.product} ${opts.companyType || "distributor OR wholesaler OR retailer"} near ${opts.mapsLocation || opts.market}`;
@@ -80,13 +120,7 @@ async function searchLocal(opts: SearchOptions): Promise<SearchResult[]> {
   const data = await resp.json();
 
   const results: SearchResult[] = [];
-
-  // Combine local_results and ad_results (local services ads)
-  const allItems = [
-    ...(data.local_results || []),
-    ...(data.ads_results || []),
-    ...(data.discover_more_places || []),
-  ];
+  const allItems = [...(data.local_results || []), ...(data.ads_results || []), ...(data.discover_more_places || [])];
 
   for (const item of allItems.slice(0, opts.limit || 10)) {
     if (!item) continue;
@@ -94,11 +128,13 @@ async function searchLocal(opts: SearchOptions): Promise<SearchResult[]> {
     const desc = [item.type, item.description, item.category, ...(item.types || [])].filter(Boolean).join(" | ");
     const phone = item.phone || item.phone_number || "";
     const address = item.address || item.full_address || "";
+    // Extract real website, not Google Maps URL
+    const website = extractWebsite(item);
 
     results.push({
       company_name: name,
-      website: item.website || item.link || item.maps_link || "",
-      description: desc || `Local business: ${address}. ${item.snippet || ""}`.trim(),
+      website,
+      description: desc || `Local business: ${address}. ${item.snippet || ""}`,
       match_score: scoreMatch(desc + " " + name + " " + (item.snippet || ""), opts.product),
       source: "google_local",
       phone,
@@ -124,22 +160,22 @@ async function searchMaps(opts: SearchOptions): Promise<SearchResult[]> {
     hl: "en",
   });
   if (opts.mapsLocation) params.set("location", opts.mapsLocation);
-  // ll: "@lat,lng,zoom" for specific areas
 
   const resp = await fetch(`${BASE}?${params}`);
   if (!resp.ok) return [];
   const data = await resp.json();
-
-  const results: SearchResult[] = [];
   const localResults = data.local_results || data.place_results ? [data.place_results] : [];
+  const results: SearchResult[] = [];
 
   for (const item of [...(data.local_results || []), ...localResults].slice(0, opts.limit || 10)) {
     if (!item) continue;
     const name = item.title || item.name || "";
     const desc = [item.type, item.description, ...(item.types || [])].filter(Boolean).join(" | ");
+    const website = extractWebsite(item);
+
     results.push({
       company_name: name,
-      website: item.website || item.link || "",
+      website,
       description: desc || `${item.address || ""}`,
       match_score: scoreMatch(desc + name, opts.product),
       source: "google_maps",
