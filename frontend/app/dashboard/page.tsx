@@ -14,6 +14,7 @@ import DealScorePage from "@/components/DealScorePage";
 import MarketIntelPage from "@/components/MarketIntelPage";
 import TeamPage from "@/components/TeamPage";
 import PipelinePage from "@/components/PipelinePage";
+import OverviewPage from "@/components/OverviewPage";
 import {
   searchCustomers, findEmail, generateEmail, createCustomer,
   saveEmailToCustomer, getProductKnowledge, getDashboardStats,
@@ -45,7 +46,17 @@ export default function DashboardPage() {
     });
   }, [activeTab]); // Refresh when switching tabs
 
-  const hasKnowledge = productKnowledge && productKnowledge.productName;
+  const hasKnowledge = !!(productKnowledge && productKnowledge.productName);
+
+  // Listen for changeTab events from child components
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const tab = (e as CustomEvent).detail;
+      if (tab) setActiveTab(tab);
+    };
+    window.addEventListener("changeTab", handler);
+    return () => window.removeEventListener("changeTab", handler);
+  }, []);
 
   // Gmail state
   const [gmailConnected, setGmailConnected] = useState(false);
@@ -276,14 +287,42 @@ export default function DashboardPage() {
       <Sidebar activeTab={activeTab} onTabChange={setActiveTab} open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
       <main className="flex-1 overflow-y-auto bg-gray-50">
-        {/* Mobile header with hamburger */}
+        {/* Mobile header with hamburger + quota */}
         <div className="lg:hidden sticky top-0 z-30 bg-white border-b border-gray-100 px-4 py-3 flex items-center gap-3">
           <button onClick={() => setSidebarOpen(true)} className="p-1.5 text-gray-600 hover:text-gray-900">
             <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"/></svg>
           </button>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-1">
             <div className="w-6 h-6 bg-primary rounded flex items-center justify-center"><span className="text-white font-bold text-[10px]">TL</span></div>
             <span className="font-semibold text-sm">TradeLead AI</span>
+          </div>
+          <div className="flex items-center gap-1.5 text-[10px] text-gray-400 bg-gray-50 px-2 py-1 rounded-full">
+            <span>配额</span>
+            <span className="font-semibold text-gray-600">200<span className="text-gray-400">封/月</span></span>
+          </div>
+        </div>
+
+        {/* Desktop quota bar */}
+        <div className="hidden lg:flex sticky top-0 z-20 bg-white/90 backdrop-blur-sm border-b border-gray-100 px-6 py-2 items-center justify-end gap-4">
+          <div className="flex items-center gap-4 text-xs text-gray-500">
+            <span className="flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-green-500"/>
+              月度邮件配额：<span className="font-semibold text-gray-700">0 / 200 封</span>
+            </span>
+            <span className="text-gray-300">|</span>
+            <span className="flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-blue-500"/>
+              月度搜索配额：<span className="font-semibold text-gray-700">0 / 500 次</span>
+            </span>
+            {gmailConnected && (
+              <>
+                <span className="text-gray-300">|</span>
+                <span className="flex items-center gap-1.5 text-green-600">
+                  <span className="w-1.5 h-1.5 rounded-full bg-green-500"/>
+                  Gmail 已连接：{gmailEmail}
+                </span>
+              </>
+            )}
           </div>
         </div>
 
@@ -303,50 +342,7 @@ export default function DashboardPage() {
           )}
 
           {/* Overview */}
-          {activeTab === "overview" && (
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">概览</h2>
-              <p className="text-gray-500 mb-8">欢迎使用 TradeLead AI，AI 成交辅助系统</p>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-8">
-                {[
-                  { label: "已存客户", value: "-", color: "text-blue-600" },
-                  { label: "AI 邮件生成", value: "-", color: "text-green-600" },
-                  { label: "产品知识库", value: productKnowledge ? "已配置" : "未配置", color: productKnowledge ? "text-green-600" : "text-orange-500" },
-                  { label: "今日额度", value: "250次搜索", color: "text-purple-600" },
-                ].map((stat, i) => (
-                  <div key={i} className="bg-white rounded-xl border border-gray-200 p-5">
-                    <div className="text-sm text-gray-500 mb-1">{stat.label}</div>
-                    <div className={`text-xl font-bold ${stat.color}`}>{stat.value}</div>
-                  </div>
-                ))}
-              </div>
-              {/* Quick start */}
-              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-100 p-6">
-                <h3 className="font-semibold text-gray-900 mb-3">快速开始</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm text-gray-600">
-                  <div>
-                    <p className="font-medium text-gray-800 mb-2">基础流程</p>
-                    <ol className="space-y-1.5">
-                      <li>1. 配置"产品知识库"（AI 写邮件的质量基础）</li>
-                      <li>2. "客户搜索"找潜在客户</li>
-                      <li>3. "找邮箱"获取联系方式</li>
-                      <li>4. AI 生成 3 版个性化开发信</li>
-                      <li>5. 人工审核后发送</li>
-                    </ol>
-                  </div>
-                  <div>
-                    <p className="font-medium text-gray-800 mb-2">成交辅助（核心差异）</p>
-                    <ol className="space-y-1.5">
-                      <li>⭐ "报价单生成" - AI 生成专业报价</li>
-                      <li>⭐ "询盘回复" - 粘贴客户邮件，AI 帮你回</li>
-                      <li>⭐ "我的客户" - 管理跟进状态</li>
-                      <li>⭐ 多语言支持 - 15 种语言覆盖全球市场</li>
-                    </ol>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
+          {activeTab === "overview" && <OverviewPage hasKnowledge={hasKnowledge} onGoKnowledge={() => setActiveTab("knowledge")} />}
 
           {/* Search */}
           {activeTab === "search" && (
