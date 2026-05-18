@@ -1,24 +1,37 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import Sidebar from "@/components/Sidebar";
 import SearchForm from "@/components/SearchForm";
 import SearchResults from "@/components/SearchResults";
 import EmailModal from "@/components/EmailModal";
 import CRMPage from "@/components/CRMPage";
+import ProductKnowledgeForm from "@/components/ProductKnowledgeForm";
+import QuotationPage from "@/components/QuotationPage";
+import RepliesPage from "@/components/RepliesPage";
 import {
   searchCustomers,
   findEmail,
   generateEmail,
   createCustomer,
   saveEmailToCustomer,
+  getProductKnowledge,
   SearchResultItem,
   EmailVersion,
+  ProductKnowledge,
 } from "@/lib/api";
 
 export default function DashboardPage() {
-  // Tab state
-  const [activeTab, setActiveTab] = useState("search");
+  const [activeTab, setActiveTab] = useState("overview");
+
+  // Product knowledge
+  const [productKnowledge, setProductKnowledge] = useState<ProductKnowledge | null>(null);
+
+  useEffect(() => {
+    getProductKnowledge().then((res) => {
+      if (res.data) setProductKnowledge(res.data);
+    });
+  }, [activeTab]); // Refresh when switching tabs
 
   // Search state
   const [searchLoading, setSearchLoading] = useState(false);
@@ -35,13 +48,6 @@ export default function DashboardPage() {
   const [selectedCustomer, setSelectedCustomer] = useState<SearchResultItem | null>(null);
   const [savedIds, setSavedIds] = useState<Set<number>>(new Set());
 
-  // Product info for email generation
-  const [productInfo, setProductInfo] = useState({
-    name: "",
-    description: "",
-    advantages: [] as string[],
-  });
-
   // ── Handlers ────────────────────────────────────────────────
 
   const handleSearch = useCallback(
@@ -50,11 +56,6 @@ export default function DashboardPage() {
       setSearchResults([]);
       setEmailResults({});
       setSavedIds(new Set());
-      setProductInfo({
-        name: params.product,
-        description: params.product,
-        advantages: ["高品质", "竞争力价格", "快速发货"],
-      });
       try {
         const res = await searchCustomers(params);
         setSearchResults(res.data || []);
@@ -70,7 +71,7 @@ export default function DashboardPage() {
 
   const handleFindEmail = useCallback(
     async (domain: string) => {
-      if (emailResults[domain]) return; // Already found
+      if (emailResults[domain]) return;
       setFindingEmail(domain);
       try {
         const res = await findEmail(domain);
@@ -92,7 +93,15 @@ export default function DashboardPage() {
       setGeneratedEmails(null);
       try {
         const res = await generateEmail({
-          product_info: productInfo,
+          product_info: {
+            name: productKnowledge?.productName || "our product",
+            description: productKnowledge?.basicInfo?.applicationScenarios?.[0] || "",
+            advantages: [
+              productKnowledge?.sellingPoints?.priceAdvantage || "",
+              productKnowledge?.sellingPoints?.qualityAdvantage || "",
+              productKnowledge?.sellingPoints?.deliveryAdvantage || "",
+            ].filter(Boolean),
+          },
           customer_info: {
             company_name: item.company_name,
             website: item.website,
@@ -100,26 +109,35 @@ export default function DashboardPage() {
             contact_name: "",
           },
           email_type: "initial",
+          language: "en",
         });
         setGeneratedEmails(res.data || {});
       } catch (err) {
         console.error("Generate email failed:", err);
-        alert("邮件生成失败，请确认后端服务已启动");
+        alert("邮件生成失败");
       } finally {
         setGeneratingEmail(false);
       }
     },
-    [productInfo]
+    [productKnowledge]
   );
 
   const handleRegenerate = useCallback(
-    async (emailType: string) => {
+    async (emailType: string, language: string) => {
       if (!selectedCustomer) return;
       setGeneratingEmail(true);
       setGeneratedEmails(null);
       try {
         const res = await generateEmail({
-          product_info: productInfo,
+          product_info: {
+            name: productKnowledge?.productName || "our product",
+            description: productKnowledge?.basicInfo?.applicationScenarios?.[0] || "",
+            advantages: [
+              productKnowledge?.sellingPoints?.priceAdvantage || "",
+              productKnowledge?.sellingPoints?.qualityAdvantage || "",
+              productKnowledge?.sellingPoints?.deliveryAdvantage || "",
+            ].filter(Boolean),
+          },
           customer_info: {
             company_name: selectedCustomer.company_name,
             website: selectedCustomer.website,
@@ -127,6 +145,7 @@ export default function DashboardPage() {
             contact_name: "",
           },
           email_type: emailType,
+          language,
         });
         setGeneratedEmails(res.data || {});
       } catch (err) {
@@ -135,20 +154,17 @@ export default function DashboardPage() {
         setGeneratingEmail(false);
       }
     },
-    [selectedCustomer, productInfo]
+    [selectedCustomer, productKnowledge]
   );
 
   const handleCopy = useCallback((content: string) => {
-    navigator.clipboard.writeText(content).then(() => {
-      alert("已复制到剪贴板");
-    });
+    navigator.clipboard.writeText(content).then(() => alert("已复制到剪贴板"));
   }, []);
 
   const handleSaveEmail = useCallback(
     async (version: number, subject: string, content: string) => {
       if (!selectedCustomer) return;
       try {
-        // Save customer to CRM
         const cust = await createCustomer({
           company_name: selectedCustomer.company_name,
           website: selectedCustomer.website,
@@ -156,14 +172,7 @@ export default function DashboardPage() {
           match_score: selectedCustomer.match_score,
           status: "sent",
         });
-        // Save the email
-        await saveEmailToCustomer(cust.id, {
-          subject,
-          content,
-          version,
-          email_type: "initial",
-        });
-        // Mark as saved
+        await saveEmailToCustomer(cust.id, { subject, content, version, email_type: "initial" });
         const idx = searchResults.indexOf(selectedCustomer);
         setSavedIds((prev) => new Set(prev).add(idx));
         setEmailModalOpen(false);
@@ -203,40 +212,53 @@ export default function DashboardPage() {
 
       <main className="flex-1 overflow-y-auto bg-gray-50">
         <div className="max-w-6xl mx-auto px-8 py-8">
+          {/* Overview */}
           {activeTab === "overview" && (
             <div>
               <h2 className="text-2xl font-bold text-gray-900 mb-2">概览</h2>
-              <p className="text-gray-500 mb-8">欢迎使用 TradeLead AI，你的外贸获客智能助手</p>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="bg-white rounded-xl border border-gray-200 p-6">
-                  <div className="text-sm text-gray-500 mb-1">今日剩余搜索</div>
-                  <div className="text-3xl font-bold text-gray-900">250</div>
-                  <div className="text-xs text-gray-400 mt-1">SerpAPI 免费配额</div>
-                </div>
-                <div className="bg-white rounded-xl border border-gray-200 p-6">
-                  <div className="text-sm text-gray-500 mb-1">AI 邮件额度</div>
-                  <div className="text-3xl font-bold text-gray-900">10</div>
-                  <div className="text-xs text-gray-400 mt-1">本月剩余</div>
-                </div>
-                <div className="bg-white rounded-xl border border-gray-200 p-6">
-                  <div className="text-sm text-gray-500 mb-1">邮箱查询额度</div>
-                  <div className="text-3xl font-bold text-gray-900">25</div>
-                  <div className="text-xs text-gray-400 mt-1">Hunter.io 免费配额</div>
-                </div>
+              <p className="text-gray-500 mb-8">欢迎使用 TradeLead AI，AI 成交辅助系统</p>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+                {[
+                  { label: "已存客户", value: "-", color: "text-blue-600" },
+                  { label: "AI 邮件生成", value: "-", color: "text-green-600" },
+                  { label: "产品知识库", value: productKnowledge ? "已配置" : "未配置", color: productKnowledge ? "text-green-600" : "text-orange-500" },
+                  { label: "今日额度", value: "250次搜索", color: "text-purple-600" },
+                ].map((stat, i) => (
+                  <div key={i} className="bg-white rounded-xl border border-gray-200 p-5">
+                    <div className="text-sm text-gray-500 mb-1">{stat.label}</div>
+                    <div className={`text-xl font-bold ${stat.color}`}>{stat.value}</div>
+                  </div>
+                ))}
               </div>
-              <div className="mt-8 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-100">
-                <h3 className="font-semibold text-gray-900 mb-2">快速开始</h3>
-                <ol className="text-sm text-gray-600 space-y-2">
-                  <li>1. 点击左侧"客户搜索"，输入你的产品和目标市场</li>
-                  <li>2. 在搜索结果中，点击"找邮箱"获取客户联系方式</li>
-                  <li>3. 点击"生成邮件"，AI 为你生成个性化开发信</li>
-                  <li>4. 复制邮件内容，到 Gmail 手动发送</li>
-                  <li>5. 在"我的客户"中管理跟进状态</li>
-                </ol>
+              {/* Quick start */}
+              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-100 p-6">
+                <h3 className="font-semibold text-gray-900 mb-3">快速开始</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600">
+                  <div>
+                    <p className="font-medium text-gray-800 mb-2">基础流程</p>
+                    <ol className="space-y-1.5">
+                      <li>1. 配置"产品知识库"（AI 写邮件的质量基础）</li>
+                      <li>2. "客户搜索"找潜在客户</li>
+                      <li>3. "找邮箱"获取联系方式</li>
+                      <li>4. AI 生成 3 版个性化开发信</li>
+                      <li>5. 人工审核后发送</li>
+                    </ol>
+                  </div>
+                  <div>
+                    <p className="font-medium text-gray-800 mb-2">成交辅助（核心差异）</p>
+                    <ol className="space-y-1.5">
+                      <li>⭐ "报价单生成" - AI 生成专业报价</li>
+                      <li>⭐ "询盘回复" - 粘贴客户邮件，AI 帮你回</li>
+                      <li>⭐ "我的客户" - 管理跟进状态</li>
+                      <li>多语言支持 - 15 种语言覆盖全球市场</li>
+                    </ol>
+                  </div>
+                </div>
               </div>
             </div>
           )}
 
+          {/* Search */}
           {activeTab === "search" && (
             <div>
               <h2 className="text-2xl font-bold text-gray-900 mb-6">客户搜索</h2>
@@ -264,17 +286,17 @@ export default function DashboardPage() {
             </div>
           )}
 
+          {/* CRM */}
           {activeTab === "crm" && <CRMPage />}
 
-          {activeTab === "templates" && (
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">邮件模板</h2>
-              <div className="bg-white rounded-xl border border-gray-200 p-8 text-center text-gray-400">
-                <p className="text-lg">邮件模板管理功能即将上线</p>
-                <p className="text-sm mt-1">你可以保存常用的邮件模板，快速复用</p>
-              </div>
-            </div>
-          )}
+          {/* Product Knowledge */}
+          {activeTab === "knowledge" && <ProductKnowledgeForm />}
+
+          {/* Quotations */}
+          {activeTab === "quotations" && <QuotationPage />}
+
+          {/* Replies */}
+          {activeTab === "replies" && <RepliesPage />}
         </div>
       </main>
 
@@ -289,6 +311,7 @@ export default function DashboardPage() {
         onRegenerate={handleRegenerate}
         onCopy={handleCopy}
         onSaveEmail={handleSaveEmail}
+        productKnowledge={productKnowledge}
       />
     </div>
   );

@@ -1,94 +1,11 @@
+import { buildEmailPrompt, buildQuotationPrompt, buildReplyPrompt, ProductKnowledge } from "./prompts";
+
 const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY || "";
 const DEEPSEEK_URL = "https://api.deepseek.com/chat/completions";
 
-const SYSTEM_PROMPT = `You are a professional B2B cold email copywriter specializing in high-response-rate personalized outreach emails for international trade.
+// ── Generic Call ──────────────────────────────────────────────
 
-## Task
-Generate 3 versions of a personalized cold email based on the product info and customer info provided.
-
-## Requirements
-1. Each version MUST be personalized — mention the recipient's company by name and reference their specific business
-2. Subject lines must be compelling to increase open rates (avoid spam trigger words)
-3. Content must be concise, under 150 words
-4. Each version must have a clear CTA (call to action), e.g.:
-   - "Reply to this email and I'll send you our product catalog"
-   - "Do you have 15 minutes for a quick call this week?"
-   - "Can I send you a case study?"
-5. Tone: professional but not stiff, friendly but not overly familiar
-
-## Output Format
-Return ONLY valid JSON, no other text:
-{
-  "version1": {
-    "subject": "subject line (formal version)",
-    "content": "email body (formal version)"
-  },
-  "version2": {
-    "subject": "subject line (concise version)",
-    "content": "email body (concise version, suitable for busy executives)"
-  },
-  "version3": {
-    "subject": "subject line (story-based version)",
-    "content": "email body (story-based version, use case study or data to engage)"
-  }
-}`;
-
-export interface EmailVersion {
-  subject: string;
-  content: string;
-}
-
-export interface GeneratedEmails {
-  version1: EmailVersion;
-  version2: EmailVersion;
-  version3: EmailVersion;
-}
-
-export async function generateEmails(
-  productInfo: {
-    name: string;
-    description: string;
-    advantages: string[];
-  },
-  customerInfo: {
-    company_name: string;
-    website: string;
-    description: string;
-    contact_name: string;
-  },
-  emailType = "initial"
-): Promise<GeneratedEmails> {
-  if (!DEEPSEEK_API_KEY) return mockGenerate(productInfo, customerInfo, emailType);
-
-  const typeDesc: Record<string, string> = {
-    initial: "first cold outreach email",
-    followup1: "first follow-up email (3 days after initial)",
-    followup2: "second follow-up email (7 days after initial)",
-    followup3: "third follow-up email (14 days after initial)",
-  };
-
-  const advList = productInfo.advantages.map((a) => `  - ${a}`).join("\n");
-  const productStr = `- Product Name: ${productInfo.name}
-- Description: ${productInfo.description}
-- Advantages:
-${advList}`;
-
-  const customerStr = `- Company: ${customerInfo.company_name}
-- Website: ${customerInfo.website}
-- Business: ${customerInfo.description}
-- Contact: ${customerInfo.contact_name}`;
-
-  const userPrompt = `## Product Info
-${productStr}
-
-## Customer Info
-${customerStr}
-
-## Email Type
-${typeDesc[emailType] || emailType}
-
-Generate 3 versions of a personalized ${typeDesc[emailType] || emailType}. Return JSON only.`;
-
+async function callDeepSeek(systemPrompt: string, userPrompt: string): Promise<any> {
   const resp = await fetch(DEEPSEEK_URL, {
     method: "POST",
     headers: {
@@ -98,46 +15,201 @@ Generate 3 versions of a personalized ${typeDesc[emailType] || emailType}. Retur
     body: JSON.stringify({
       model: "deepseek-chat",
       messages: [
-        { role: "system", content: SYSTEM_PROMPT },
+        { role: "system", content: systemPrompt },
         { role: "user", content: userPrompt },
       ],
       temperature: 0.8,
-      max_tokens: 2000,
+      max_tokens: 3000,
     }),
   });
 
   if (!resp.ok) throw new Error(`DeepSeek error: ${resp.status}`);
   const data = await resp.json();
   const content = data.choices?.[0]?.message?.content?.trim() || "";
-
   const jsonMatch = content.match(/\{[\s\S]*\}/);
   if (jsonMatch) return JSON.parse(jsonMatch[0]);
-
-  return mockGenerate(productInfo, customerInfo, emailType);
+  throw new Error("Failed to parse AI response as JSON");
 }
 
+// ── Types ─────────────────────────────────────────────────────
+
+export interface AIScore {
+  personalization: number;
+  valueClarity: number;
+  socialProof: number;
+  ctaClarity: number;
+  spamRisk: number;
+  overallScore: number;
+  feedback: string;
+}
+
+export interface EmailVersion {
+  subject: string;
+  content: string;
+  tone?: string;
+  aiScore?: AIScore;
+}
+
+export interface GeneratedEmails {
+  version1: EmailVersion;
+  version2: EmailVersion;
+  version3: EmailVersion;
+}
+
+// ── Generate Email (Enhanced) ─────────────────────────────────
+
+export async function generateEmails(
+  productKnowledge: ProductKnowledge | null,
+  customerInfo: {
+    company_name: string;
+    website: string;
+    description: string;
+    contact_name: string;
+  },
+  emailType = "initial",
+  language = "en"
+): Promise<GeneratedEmails> {
+  if (!DEEPSEEK_API_KEY) {
+    return mockGenerate(productKnowledge, customerInfo, emailType);
+  }
+
+  const { system, user } = buildEmailPrompt(productKnowledge, customerInfo, emailType, language);
+  return callDeepSeek(system, user);
+}
+
+// ── Generate Quotation (P1) ───────────────────────────────────
+
+export interface QuotationResult {
+  quotationTitle: string;
+  headerNote: string;
+  productTable: Array<{
+    name: string;
+    specs: string;
+    unitPrice: number;
+    quantity: number;
+    total: number;
+    description: string;
+  }>;
+  summaryText: string;
+  closingText: string;
+  footerNote: string;
+}
+
+export async function generateQuotation(
+  productKnowledge: ProductKnowledge | null,
+  customerInfo: { company_name: string; contact_name: string; email: string },
+  products: Array<{ name: string; specs: string; unitPrice: number; quantity: number; total: number }>,
+  options: { currency?: string; validUntil?: string; paymentTerms?: string; deliveryTerms?: string; notes?: string; language?: string }
+): Promise<QuotationResult> {
+  if (!DEEPSEEK_API_KEY) {
+    return mockQuotation(customerInfo, products, options);
+  }
+
+  const { system, user } = buildQuotationPrompt(productKnowledge, customerInfo, products, options);
+  return callDeepSeek(system, user);
+}
+
+// ── Generate Reply (P1) ───────────────────────────────────────
+
+export interface ReplyVersion {
+  subject: string;
+  content: string;
+  tone: string;
+}
+
+export interface GeneratedReplies {
+  version1: ReplyVersion;
+  version2: ReplyVersion;
+  version3: ReplyVersion;
+}
+
+export async function generateReply(
+  productKnowledge: ProductKnowledge | null,
+  customerEmail: string,
+  customerStatus: string,
+  language = "en"
+): Promise<GeneratedReplies> {
+  if (!DEEPSEEK_API_KEY) {
+    return mockReply(customerEmail);
+  }
+
+  const { system, user } = buildReplyPrompt(productKnowledge, customerEmail, customerStatus, language);
+  return callDeepSeek(system, user);
+}
+
+// ── Mock Functions ────────────────────────────────────────────
+
 function mockGenerate(
-  productInfo: { name: string; description: string },
+  pk: ProductKnowledge | null,
   customerInfo: { company_name: string; contact_name: string },
   _emailType: string
 ): GeneratedEmails {
   const company = customerInfo.company_name || "your company";
   const contact = customerInfo.contact_name || "there";
-  const product = productInfo.name || "our product";
-  const desc = productInfo.description || "high-quality products";
+  const product = pk?.productName || "our product";
+  const desc = pk?.basicInfo?.applicationScenarios?.[0] || "high-quality products";
 
   return {
     version1: {
       subject: `Partnership opportunity: ${product} for ${company}`,
-      content: `Dear ${contact},\n\nI hope this email finds you well. I came across ${company} while researching top companies in the industry, and I was impressed by your market presence.\n\nWe specialize in ${desc}. Our ${product} offers significant advantages including competitive pricing, 2-year warranty, and fast shipping.\n\nI'd love to explore how ${product} could add value to ${company}'s product lineup. Would you be open to a brief 15-minute call next week?\n\nBest regards,\n[Your name]\n[Your company]`,
+      content: `Dear ${contact},\n\nI came across ${company} and was impressed by your market presence.\n\nWe specialize in ${desc}. Our ${product} offers ${pk?.sellingPoints?.priceAdvantage || "competitive pricing"} and ${pk?.sellingPoints?.qualityAdvantage || "superior quality"}.\n\nWould you be open to a brief 15-minute call next week?\n\nBest regards,\n[Your name]`,
+      tone: "professional",
+      aiScore: { personalization: 7, valueClarity: 7, socialProof: 5, ctaClarity: 8, spamRisk: 3, overallScore: 7.1, feedback: "Add a specific case study to increase social proof." },
     },
     version2: {
-      subject: `Quick question about ${company}'s product sourcing`,
-      content: `Hi ${contact},\n\nI'm with a company that provides ${desc}.\n\nI noticed ${company} is a key player in the market, and I thought you might be interested in our ${product} — it delivers better margins while reducing energy costs by 30%.\n\nCan I send over a 1-page comparison sheet?\n\nThanks,\n[Your name]`,
+      subject: `Quick question about ${company}`,
+      content: `Hi ${contact},\n\nI noticed ${company} is a key player. Our ${product} delivers ${pk?.sellingPoints?.deliveryAdvantage || "fast delivery"}.\n\nCan I send over a 1-page comparison?\n\nThanks,\n[Your name]`,
+      tone: "casual",
+      aiScore: { personalization: 6, valueClarity: 7, socialProof: 4, ctaClarity: 8, spamRisk: 2, overallScore: 6.5, feedback: "Good brevity. Could reference a competitor win." },
     },
     version3: {
-      subject: `How we helped a distributor increase margins by 25%`,
-      content: `Hi ${contact},\n\nLast quarter, we helped a distributor similar to ${company} switch to our ${product}. The result? Their margins improved by 25% and their customers reported higher satisfaction with the energy savings.\n\nI'm wondering if ${company} might be looking for similar improvements in your product lineup.\n\nOur ${product} could help you achieve comparable results. Would you be open to seeing a brief case study?\n\nBest,\n[Your name]\n[Your company]`,
+      subject: `How a ${pk?.caseStudies?.[0]?.industry || "similar"} company achieved better results`,
+      content: `Hi ${contact},\n\nLast quarter, we helped a ${pk?.caseStudies?.[0]?.industry || "similar"} company switch to ${product}. Result? ${pk?.caseStudies?.[0]?.result || "Significant improvement in their metrics"}.\n\nCould ${company} benefit from similar results?\n\nBest,\n[Your name]`,
+      tone: "story",
+      aiScore: { personalization: 8, valueClarity: 7, socialProof: 8, ctaClarity: 7, spamRisk: 3, overallScore: 7.5, feedback: "Good storytelling. Make the CTA more specific." },
+    },
+  };
+}
+
+function mockQuotation(
+  customerInfo: { company_name: string; contact_name: string },
+  products: Array<{ name: string; specs: string; unitPrice: number; quantity: number; total: number }>,
+  options: { currency?: string; validUntil?: string; paymentTerms?: string; deliveryTerms?: string }
+): QuotationResult {
+  return {
+    quotationTitle: `Official Quotation — ${customerInfo.company_name}`,
+    headerNote: `Dear ${customerInfo.contact_name},\n\nThank you for your inquiry. We are pleased to provide the following quotation for your consideration:`,
+    productTable: products.map((p) => ({
+      name: p.name,
+      specs: p.specs,
+      unitPrice: p.unitPrice,
+      quantity: p.quantity,
+      total: p.total,
+      description: `High-quality ${p.name} with ${p.specs}`,
+    })),
+    summaryText: `Total: ${options.currency || "USD"} ${products.reduce((s, p) => s + p.total, 0).toFixed(2)}. ${options.paymentTerms || ""}`,
+    closingText: "We look forward to the opportunity to work with you. Please feel free to contact us with any questions.",
+    footerNote: `This quotation is valid until ${options.validUntil || "30 days from issue date"}.`,
+  };
+}
+
+function mockReply(customerEmail: string): GeneratedReplies {
+  const snippet = customerEmail.slice(0, 100);
+  return {
+    version1: {
+      subject: "Re: Your inquiry",
+      content: `Dear Sir/Madam,\n\nThank you for reaching out. Regarding your inquiry about "${snippet}...", I'd be happy to provide more details.\n\nCould you let me know your specific requirements so I can give you the most accurate information?\n\nBest regards,\n[Your name]`,
+      tone: "professional",
+    },
+    version2: {
+      subject: "Re: Your inquiry",
+      content: `Hi,\n\nThanks for the message. To answer your question — yes, we can help with that.\n\nLet me know a convenient time for a quick call, or I can send over our catalog.\n\nBest,\n[Your name]`,
+      tone: "concise",
+    },
+    version3: {
+      subject: "Re: Your inquiry — here's how we can help",
+      content: `Dear Sir/Madam,\n\nGreat question. We recently helped a similar client achieve excellent results with the same requirements you mentioned.\n\nI'd love to share that case study with you. Would you be open to a 10-minute call this week?\n\nBest regards,\n[Your name]`,
+      tone: "persuasive",
     },
   };
 }

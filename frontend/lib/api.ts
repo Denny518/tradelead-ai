@@ -71,11 +71,24 @@ export interface GenerateEmailParams {
     contact_name: string;
   };
   email_type: string;
+  language?: string;
+}
+
+export interface AIScore {
+  personalization: number;
+  valueClarity: number;
+  socialProof: number;
+  ctaClarity: number;
+  spamRisk: number;
+  overallScore: number;
+  feedback: string;
 }
 
 export interface EmailVersion {
   subject: string;
   content: string;
+  tone?: string;
+  aiScore?: AIScore;
 }
 
 export interface GenerateEmailResponse {
@@ -160,4 +173,61 @@ export function exportCustomersCSVUrl(status?: string): string {
   const params = new URLSearchParams();
   if (status) params.set("status", status);
   return `/api/customers/export-csv?${params.toString()}`;
+}
+
+// ── Product Knowledge ─────────────────────────────────────────
+
+export interface ProductKnowledge {
+  id?: string;
+  userId?: string;
+  productName: string;
+  basicInfo?: {
+    applicationScenarios: string[];
+    targetCustomers: string[];
+    competitors: string[];
+  };
+  sellingPoints?: {
+    priceAdvantage: string;
+    qualityAdvantage: string;
+    deliveryAdvantage: string;
+    serviceAdvantage: string;
+  };
+  techSpecs?: Record<string, string>;
+  caseStudies?: Array<{
+    customer: string;
+    industry: string;
+    painPoint: string;
+    solution: string;
+    result: string;
+  }>;
+  faq?: Array<{ question: string; answer: string }>;
+  emailStyle?: string;
+}
+
+export async function getProductKnowledge(): Promise<{ success: boolean; data: ProductKnowledge | null }> {
+  return request("/api/product-knowledge");
+}
+
+export async function saveProductKnowledge(data: ProductKnowledge): Promise<{ success: boolean; data: ProductKnowledge }> {
+  return request("/api/product-knowledge", { method: "POST", body: JSON.stringify(data) });
+}
+
+// ── Quotation ─────────────────────────────────────────────────
+
+export async function generateQuotation(params: {
+  customerInfo: { company_name: string; contact_name: string; email: string };
+  products: Array<{ name: string; specs: string; unitPrice: number; quantity: number; total: number }>;
+  options?: { currency?: string; validUntil?: string; paymentTerms?: string; deliveryTerms?: string; notes?: string; language?: string };
+}): Promise<any> {
+  return request("/api/generate-quotation", { method: "POST", body: JSON.stringify(params) });
+}
+
+// ── Reply ─────────────────────────────────────────────────────
+
+export async function generateReply(params: {
+  customerEmail: string;
+  customerStatus?: string;
+  language?: string;
+}): Promise<any> {
+  return request("/api/generate-reply", { method: "POST", body: JSON.stringify(params) });
 }

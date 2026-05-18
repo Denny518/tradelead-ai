@@ -219,6 +219,57 @@ export function saveSearch(data: {
   writeCollection("searches", searches);
 }
 
+// ── Product Knowledge ──────────────────────────────────────────
+
+export interface ProductKnowledge {
+  id?: string;
+  userId?: string;
+  productName: string;
+  basicInfo?: {
+    applicationScenarios: string[];
+    targetCustomers: string[];
+    competitors: string[];
+  };
+  sellingPoints?: {
+    priceAdvantage: string;
+    qualityAdvantage: string;
+    deliveryAdvantage: string;
+    serviceAdvantage: string;
+  };
+  techSpecs?: Record<string, string>;
+  caseStudies?: Array<{
+    customer: string;
+    industry: string;
+    painPoint: string;
+    solution: string;
+    result: string;
+  }>;
+  faq?: Array<{
+    question: string;
+    answer: string;
+  }>;
+  emailStyle?: string;
+}
+
+export function getProductKnowledge(userId: string): ProductKnowledge | null {
+  const items = readCollection<any>("product_knowledge");
+  return items.find((p: any) => p.userId === userId) || null;
+}
+
+export function saveProductKnowledge(userId: string, data: ProductKnowledge): ProductKnowledge {
+  const items = readCollection<any>("product_knowledge");
+  const idx = items.findIndex((p: any) => p.userId === userId);
+  const record = { ...data, id: data.id || `pk_${Date.now()}`, userId, updatedAt: now() };
+
+  if (idx === -1) {
+    items.push({ ...record, createdAt: now() });
+  } else {
+    items[idx] = { ...items[idx], ...record, createdAt: items[idx].createdAt };
+  }
+  writeCollection("product_knowledge", items);
+  return record;
+}
+
 // ── Export CSV ─────────────────────────────────────────────────
 
 export function exportCustomersCSV(status?: string): string {
