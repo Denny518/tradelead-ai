@@ -231,3 +231,60 @@ export async function generateReply(params: {
 }): Promise<any> {
   return request("/api/generate-reply", { method: "POST", body: JSON.stringify(params) });
 }
+
+// ── Follow-ups ────────────────────────────────────────────────
+
+export interface FollowupItem {
+  customerId: number;
+  customerName: string;
+  email: string;
+  lastEmailDate: string;
+  lastEmailType: string;
+  daysSinceLastContact: number;
+  followupDue: string;
+  suggestedAction: string;
+}
+
+export async function getFollowups(): Promise<{ success: boolean; data: FollowupItem[]; summary: { total: number; overdue: number; dueToday: number } }> {
+  return request("/api/followups");
+}
+
+// ── Deal Score ────────────────────────────────────────────────
+
+export async function getDealScore(customerId: number): Promise<any> {
+  return request(`/api/deal-score/${customerId}`);
+}
+
+export async function refreshDealScore(customerId: number): Promise<any> {
+  return request(`/api/deal-score/${customerId}`, { method: "POST" });
+}
+
+// ── Market Intel ──────────────────────────────────────────────
+
+export async function getMarketIntel(): Promise<any> {
+  return request("/api/market-intel");
+}
+
+export async function analyzeMarket(params: { market: string; industry: string }): Promise<any> {
+  return request("/api/market-intel", { method: "POST", body: JSON.stringify(params) });
+}
+
+// ── Team ─────────────────────────────────────────────────────
+
+export async function getTeamMembers(): Promise<any> {
+  return request("/api/team");
+}
+
+export async function addTeamMember(email: string, role?: string): Promise<any> {
+  return request("/api/team", { method: "POST", body: JSON.stringify({ email, role }) });
+}
+
+export async function removeTeamMember(id: string): Promise<any> {
+  return request(`/api/team?id=${id}`, { method: "DELETE" });
+}
+
+// ── Dashboard Stats ──────────────────────────────────────────
+
+export async function getDashboardStats(): Promise<any> {
+  return request("/api/dashboard-stats");
+}

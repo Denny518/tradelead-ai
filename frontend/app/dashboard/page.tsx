@@ -9,6 +9,11 @@ import CRMPage from "@/components/CRMPage";
 import ProductKnowledgeForm from "@/components/ProductKnowledgeForm";
 import QuotationPage from "@/components/QuotationPage";
 import RepliesPage from "@/components/RepliesPage";
+import FollowupsPage from "@/components/FollowupsPage";
+import DealScorePage from "@/components/DealScorePage";
+import MarketIntelPage from "@/components/MarketIntelPage";
+import TeamPage from "@/components/TeamPage";
+import PipelinePage from "@/components/PipelinePage";
 import {
   searchCustomers,
   findEmail,
@@ -16,6 +21,7 @@ import {
   createCustomer,
   saveEmailToCustomer,
   getProductKnowledge,
+  getDashboardStats,
   SearchResultItem,
   EmailVersion,
   ProductKnowledge,
@@ -297,6 +303,13 @@ export default function DashboardPage() {
 
           {/* Replies */}
           {activeTab === "replies" && <RepliesPage />}
+
+          {/* P2 Features */}
+          {activeTab === "followups" && <FollowupsPage />}
+          {activeTab === "dealscore" && <DealScorePage />}
+          {activeTab === "marketintel" && <MarketIntelPage />}
+          {activeTab === "pipeline" && <PipelinePage />}
+          {activeTab === "team" && <TeamPage />}
         </div>
       </main>
 

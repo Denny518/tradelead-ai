@@ -270,6 +270,209 @@ export function saveProductKnowledge(userId: string, data: ProductKnowledge): Pr
   return record;
 }
 
+// ── Follow-up Tracking ────────────────────────────────────────
+
+export interface FollowupStatus {
+  customerId: number;
+  customerName: string;
+  email: string;
+  lastEmailDate: string;
+  lastEmailType: string;
+  daysSinceLastContact: number;
+  followupDue: "day3" | "day7" | "day14" | "overdue" | "none";
+  suggestedAction: string;
+}
+
+export function getFollowupList(): FollowupStatus[] {
+  const customers = readCollection<CustomerRecord>("customers");
+  const emails = readCollection<EmailRecord>("emails");
+
+  // Get the latest email for each customer
+  const latestEmails = new Map<number, EmailRecord>();
+  for (const e of emails) {
+    const existing = latestEmails.get(e.customer_id);
+    if (!existing || new Date(e.created_at) > new Date(existing.created_at)) {
+      latestEmails.set(e.customer_id, e);
+    }
+  }
+
+  const results: FollowupStatus[] = [];
+  const now = new Date();
+
+  for (const c of customers) {
+    if (c.status === "won" || c.status === "lost") continue;
+
+    const lastEmail = latestEmails.get(c.id);
+    if (!lastEmail) continue;
+
+    const lastDate = new Date(lastEmail.created_at);
+    const daysDiff = Math.floor((now.getTime() - lastDate.getTime()) / (1000 * 60 * 60 * 24));
+
+    let followupDue: FollowupStatus["followupDue"] = "none";
+    if (daysDiff >= 14) followupDue = "overdue";
+    else if (daysDiff >= 10) followupDue = "day14";
+    else if (daysDiff >= 5) followupDue = "day7";
+    else if (daysDiff >= 2) followupDue = "day3";
+
+    const typeMap: Record<string, string> = { day3: "followup1", day7: "followup2", day14: "followup3", overdue: "followup3", none: "initial" };
+    const actionMap: Record<string, string> = {
+      day3: "轻触式跟进：检查是否收到上一封邮件",
+      day7: "提供价值：发送案例研究或行业洞察",
+      day14: "最后尝试：如果无兴趣不再打扰",
+      overdue: "已超过常规跟进周期，建议电话联系",
+      none: "无需跟进",
+    };
+
+    if (followupDue !== "none" || daysDiff >= 1) {
+      results.push({
+        customerId: c.id,
+        customerName: c.company_name,
+        email: c.email || "",
+        lastEmailDate: lastEmail.created_at,
+        lastEmailType: typeMap[followupDue],
+        daysSinceLastContact: daysDiff,
+        followupDue: followupDue === "none" ? "none" : followupDue,
+        suggestedAction: actionMap[followupDue],
+      });
+    }
+  }
+
+  results.sort((a, b) => {
+    const priority: Record<string, number> = { overdue: 0, day3: 1, day7: 2, day14: 3, none: 4 };
+    return (priority[a.followupDue] ?? 4) - (priority[b.followupDue] ?? 4);
+  });
+
+  return results;
+}
+
+// ── Deal Score ─────────────────────────────────────────────────
+
+export interface DealScoreRecord {
+  customerId: number;
+  companyName: string;
+  probability: number;
+  factors: Array<{ factor: string; impact: string }>;
+  recommendation: string;
+  analyzedAt: string;
+}
+
+export function getDealScore(customerId: number): DealScoreRecord | null {
+  const scores = readCollection<any>("deal_scores");
+  return scores.find((s: any) => s.customerId === customerId) || null;
+}
+
+export function saveDealScore(score: DealScoreRecord): void {
+  const scores = readCollection<any>("deal_scores");
+  const idx = scores.findIndex((s: any) => s.customerId === score.customerId);
+  if (idx === -1) scores.push(score);
+  else scores[idx] = score;
+  writeCollection("deal_scores", scores);
+}
+
+export function getAllDealScores(): DealScoreRecord[] {
+  return readCollection("deal_scores");
+}
+
+// ── Market Intelligence ───────────────────────────────────────
+
+export interface MarketIntelRecord {
+  id: string;
+  market: string;
+  industry: string;
+  trend: string;
+  growthRate: number | null;
+  competitorData: any;
+  recommendation: string;
+  createdAt: string;
+}
+
+export function saveMarketIntel(data: MarketIntelRecord): void {
+  const items = readCollection<MarketIntelRecord>("market_intel");
+  items.push(data);
+  writeCollection("market_intel", items);
+}
+
+export function getMarketIntel(): MarketIntelRecord[] {
+  return readCollection<MarketIntelRecord>("market_intel");
+}
+
+// ── Team Members ──────────────────────────────────────────────
+
+export interface TeamMemberRecord {
+  id: string;
+  ownerId: string;
+  memberEmail: string;
+  role: string;
+  createdAt: string;
+}
+
+export function listTeamMembers(): TeamMemberRecord[] {
+  return readCollection<TeamMemberRecord>("team_members");
+}
+
+export function addTeamMember(email: string, role = "member"): TeamMemberRecord {
+  const members = readCollection<TeamMemberRecord>("team_members");
+  const record: TeamMemberRecord = {
+    id: `tm_${Date.now()}`,
+    ownerId: "demo-user-001",
+    memberEmail: email,
+    role,
+    createdAt: now(),
+  };
+  members.push(record);
+  writeCollection("team_members", members);
+  return record;
+}
+
+export function removeTeamMember(id: string): boolean {
+  const members = readCollection<TeamMemberRecord>("team_members");
+  const filtered = members.filter((m) => m.id !== id);
+  if (filtered.length === members.length) return false;
+  writeCollection("team_members", filtered);
+  return true;
+}
+
+// ── Dashboard Stats ───────────────────────────────────────────
+
+export function getDashboardStats(): {
+  totalCustomers: number;
+  totalEmails: number;
+  wonDeals: number;
+  avgResponseTime: number;
+  statusBreakdown: Record<string, number>;
+  recentActivity: Array<{ type: string; message: string; time: string }>;
+} {
+  const customers = readCollection<CustomerRecord>("customers");
+  const emails = readCollection<EmailRecord>("emails");
+
+  const statusBreakdown: Record<string, number> = {};
+  for (const c of customers) {
+    statusBreakdown[c.status] = (statusBreakdown[c.status] || 0) + 1;
+  }
+
+  const recentActivity = [
+    ...emails.slice(-5).map((e) => ({
+      type: "email",
+      message: `发送邮件给客户 #${e.customer_id}`,
+      time: e.created_at,
+    })),
+    ...customers.slice(-5).map((c) => ({
+      type: "customer",
+      message: `${c.status === "won" ? "成交" : c.status === "new" ? "新增" : "更新"}客户 ${c.company_name}`,
+      time: c.updated_at,
+    })),
+  ].sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime()).slice(0, 10);
+
+  return {
+    totalCustomers: customers.length,
+    totalEmails: emails.length,
+    wonDeals: customers.filter((c) => c.status === "won").length,
+    avgResponseTime: 0,
+    statusBreakdown,
+    recentActivity,
+  };
+}
+
 // ── Export CSV ─────────────────────────────────────────────────
 
 export function exportCustomersCSV(status?: string): string {
