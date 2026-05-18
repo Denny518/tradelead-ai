@@ -317,3 +317,17 @@ export async function removeTeamMember(id: string): Promise<any> {
 export async function getDashboardStats(): Promise<any> {
   return request("/api/dashboard-stats");
 }
+
+// ── Gmail ────────────────────────────────────────────────────
+
+export async function getGmailAuthUrl(): Promise<{ success: boolean; url?: string; message?: string }> {
+  return request("/api/gmail/auth-url");
+}
+
+export async function getGmailStatus(): Promise<{ success: boolean; data: { connected: boolean; email: string | null; configured: boolean } }> {
+  return request("/api/gmail/status");
+}
+
+export async function sendGmailEmail(params: { to: string; subject: string; content: string; customerId?: number }): Promise<{ success: boolean; data?: any; message?: string; waitSeconds?: number }> {
+  return request("/api/gmail/send", { method: "POST", body: JSON.stringify(params) });
+}

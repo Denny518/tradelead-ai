@@ -215,7 +215,7 @@ export default function HomePage() {
                 <br className="hidden sm:block"/>
                 询盘回复到成交概率分析——AI 辅助全流程，
                 <br className="hidden sm:block"/>
-                <strong className="text-gray-700">让你的业务员做出以前做不到的事。</strong>
+                <strong className="text-gray-700">连接 Gmail 一键发送，审核后直达客户收件箱。</strong>
               </p>
 
               <div className="flex flex-col sm:flex-row items-center gap-4 justify-center lg:justify-start">
@@ -323,7 +323,7 @@ export default function HomePage() {
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
             {[
               { icon: "🔍", title: "多引擎智能获客", desc: "多数据源并行搜索，覆盖普通网页、地图商家、行业新闻、购物平台。找到的不仅是公司名，还包括地址、电话、评分——比业务员手动搜索全面 5 倍。", highlight: "NEW" },
-              { icon: "✉️", title: "AI 个性化开发信", desc: "基于产品知识库和客户信息，生成 3 个版本开发信（正式/简洁/故事型）。每封 AI 自评 6 个维度质量分，低于 7 分自动重写。15 种语言母语级写作。", highlight: "核心" },
+              { icon: "✉️", title: "AI 开发信 + Gmail 直发", desc: "基于产品知识库生成 3 版个性化开发信，AI 6 维度自评。连接 Gmail 后一键直达客户收件箱，无需复制粘贴。始终人工审核，每日限发 20 封防垃圾。15 种语言母语级写作。", highlight: "核心" },
               { icon: "📊", title: "AI 报价单生成", desc: "输入产品清单和条款，秒出专业报价单。支持标准/详细/简洁/形式发票 4 种模板，9 种 Incoterms，FOB/CIF/EXW 全覆盖，多语言一键切换。", highlight: "热门" },
               { icon: "💡", title: "AI 询盘回复助手", desc: "客户发来询盘邮件？粘贴到系统，AI 分析客户意图，调用你的产品知识库和 FAQ，生成 3 个版本的专业回复——新手也能回得像 10 年老业务员。", highlight: "" },
               { icon: "🔔", title: "自动跟进提醒", desc: "哪些客户该跟进了？系统自动计算上次联系时间，标记 Day3/Day7/Day14 跟进节点。超期未跟的红标警告——不会漏掉任何成交机会。", highlight: "" },
@@ -411,13 +411,13 @@ export default function HomePage() {
               },
               {
                 step: "02", title: "搜索客户 + AI 写邮件", time: "1 分钟/客户",
-                desc: "选择产品和目标市场，多引擎并行搜索潜在客户。一键查找邮箱，AI 自动生成 3 版本个性化开发信。人工审核后发送，你始终在控制。",
+                desc: "选择产品和目标市场，多引擎并行搜索潜在客户。一键查找邮箱，AI 自动生成 3 版本个性化开发信。连接 Gmail 后一审即发，无需复制粘贴，始终保持人工审核控制。",
                 visual: (
                   <div className="bg-white rounded-xl border border-gray-200 p-4 space-y-2">
                     <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-green-500"/><span className="text-[10px] text-gray-600 font-medium">搜索完成：找到 12 家潜在客户</span></div>
                     <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-blue-500"/><span className="text-[10px] text-gray-600">找到 8 个联系邮箱</span></div>
                     <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-indigo-500"/><span className="text-[10px] text-gray-600">生成 3 版开发信（评分 8.2/10）</span></div>
-                    <div className="w-full h-8 bg-gray-900 rounded-lg flex items-center justify-center text-[10px] text-white font-medium">复制到 Gmail 发送</div>
+                    <div className="w-full h-8 bg-red-600 rounded-lg flex items-center justify-center text-[10px] text-white font-medium">连接 Gmail → 审核 → 一键发送</div>
                   </div>
                 ),
               },

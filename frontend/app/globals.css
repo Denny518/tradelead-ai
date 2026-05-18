@@ -16,6 +16,15 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Mobile sidebar slide-in animation */
+@keyframes slideIn {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
+}
+.animate-slideIn {
+  animation: slideIn 200ms ease-out;
+}
+
 /* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 6px;

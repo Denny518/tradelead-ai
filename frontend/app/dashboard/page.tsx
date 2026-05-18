@@ -15,16 +15,10 @@ import MarketIntelPage from "@/components/MarketIntelPage";
 import TeamPage from "@/components/TeamPage";
 import PipelinePage from "@/components/PipelinePage";
 import {
-  searchCustomers,
-  findEmail,
-  generateEmail,
-  createCustomer,
-  saveEmailToCustomer,
-  getProductKnowledge,
-  getDashboardStats,
-  SearchResultItem,
-  EmailVersion,
-  ProductKnowledge,
+  searchCustomers, findEmail, generateEmail, createCustomer,
+  saveEmailToCustomer, getProductKnowledge, getDashboardStats,
+  SearchResultItem, EmailVersion, ProductKnowledge,
+  getGmailStatus, getGmailAuthUrl, sendGmailEmail,
 } from "@/lib/api";
 
 export default function DashboardPage() {
@@ -52,6 +46,53 @@ export default function DashboardPage() {
   }, [activeTab]); // Refresh when switching tabs
 
   const hasKnowledge = productKnowledge && productKnowledge.productName;
+
+  // Gmail state
+  const [gmailConnected, setGmailConnected] = useState(false);
+  const [gmailEmail, setGmailEmail] = useState<string | null>(null);
+  const [sendingGmail, setSendingGmail] = useState(false);
+
+  useEffect(() => {
+    getGmailStatus().then((res) => {
+      if (res.success) {
+        setGmailConnected(res.data.connected);
+        setGmailEmail(res.data.email);
+      }
+    });
+  }, []);
+
+  const handleConnectGmail = async () => {
+    try {
+      const res = await getGmailAuthUrl();
+      if (res.success && res.url) {
+        window.location.href = res.url;
+      } else {
+        alert(res.message || "Gmail API 未配置。请在 Google Cloud Console 创建 OAuth 2.0 客户端 ID。");
+      }
+    } catch (err) {
+      alert("获取 Gmail 授权链接失败");
+    }
+  };
+
+  const handleSendGmail = async (to: string, subject: string, content: string) => {
+    if (!to) {
+      alert("请先查找客户邮箱");
+      return;
+    }
+    setSendingGmail(true);
+    try {
+      const res = await sendGmailEmail({ to, subject, content });
+      if (res.success) {
+        alert(`邮件已通过 Gmail 发送！`);
+      } else {
+        alert(`发送失败: ${res.message}`);
+      }
+    } catch (err) {
+      alert("发送失败，请重试");
+    } finally {
+      setSendingGmail(false);
+    }
+  };
 
   // Search state
   const [searchLoading, setSearchLoading] = useState(false);
@@ -368,7 +409,13 @@ export default function DashboardPage() {
         onRegenerate={handleRegenerate}
         onCopy={handleCopy}
         onSaveEmail={handleSaveEmail}
+        onSendGmail={handleSendGmail}
         productKnowledge={productKnowledge}
+        gmailConnected={gmailConnected}
+        gmailEmail={gmailEmail}
+        onConnectGmail={handleConnectGmail}
+        sendingGmail={sendingGmail}
+        customerEmail={emailResults[selectedCustomer?.website?.replace(/^https?:\/\//, "").replace(/^www\./, "").split("/")[0] || ""]?.[0]?.email || ""}
       />
     </div>
   );

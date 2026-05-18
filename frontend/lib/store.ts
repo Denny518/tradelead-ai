@@ -150,6 +150,36 @@ export function saveProductKnowledge(userId: string, data: ProductKnowledge): Pr
   writeCollection("product_knowledge", items); return record;
 }
 
+// ── Gmail Tokens ───────────────────────────────────────────────
+
+export interface GmailTokenRecord {
+  userId: string;
+  accessToken: string;
+  refreshToken: string;
+  email: string;
+  expiresAt: number;
+  updatedAt: string;
+}
+
+export function getGmailTokens(userId: string): GmailTokenRecord | null {
+  const items = readCollection<any>("gmail_tokens");
+  return items.find((t: any) => t.userId === userId) || null;
+}
+
+export function saveGmailTokens(userId: string, data: Omit<GmailTokenRecord, "userId" | "updatedAt">): void {
+  const items = readCollection<any>("gmail_tokens");
+  const idx = items.findIndex((t: any) => t.userId === userId);
+  const record = { ...data, userId, updatedAt: now() };
+  if (idx === -1) items.push(record);
+  else items[idx] = record;
+  writeCollection("gmail_tokens", items);
+}
+
+export function removeGmailTokens(userId: string): void {
+  const items = readCollection<any>("gmail_tokens").filter((t: any) => t.userId !== userId);
+  writeCollection("gmail_tokens", items);
+}
+
 // ── Follow-ups ─────────────────────────────────────────────────
 export interface FollowupStatus { customerId: number; customerName: string; email: string; lastEmailDate: string; lastEmailType: string; daysSinceLastContact: number; followupDue: string; suggestedAction: string; }
 export function getFollowupList(): FollowupStatus[] {
