@@ -89,10 +89,10 @@ export interface FindEmailResponse {
   needsManualDomain?: boolean;
 }
 
-export async function findEmail(companyDomain: string, companyName?: string, address?: string): Promise<FindEmailResponse> {
+export async function findEmail(companyDomain: string, companyName?: string, address?: string, source?: string): Promise<FindEmailResponse> {
   return request("/api/find-email", {
     method: "POST",
-    body: JSON.stringify({ company_domain: companyDomain, company_name: companyName || "", address: address || "" }),
+    body: JSON.stringify({ company_domain: companyDomain, company_name: companyName || "", address: address || "", source: source || "" }),
   });
 }
 

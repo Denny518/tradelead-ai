@@ -339,18 +339,23 @@ async function searchLinkedIn(opts: SearchOptions): Promise<SearchResult[]> {
   for (const item of (data.organic_results || []).slice(0, opts.limit || 10)) {
     const title = item.title || "";
     const snippet = item.snippet || "";
-    // Extract name from LinkedIn profile title: "John Smith - Procurement Manager - Company | LinkedIn"
+    // Extract name and company from: "John Smith - Procurement Manager - Company | LinkedIn"
     const nameParts = title.split(" - ");
     const personName = nameParts[0]?.trim() || "";
     const role = nameParts[1]?.trim() || "";
+    // Try to guess company from remaining parts
+    const possibleCompany = nameParts[2]?.replace(/\|.*$/, "").trim() || "";
 
+    // For LinkedIn results, website is NOT the LinkedIn URL - it's empty until we find the company
     results.push({
       company_name: personName,
-      website: item.link || "",
-      description: `${role} | ${snippet.slice(0, 120)}`,
-      match_score: scoreMatch(snippet + title, opts.product),
+      website: "", // Don't use linkedin.com URL — will trigger company website search
+      description: `${role}${possibleCompany ? ` @ ${possibleCompany}` : ""} | ${snippet.slice(0, 100)}`,
+      match_score: scoreMatch(snippet + title + possibleCompany, opts.product),
       source: "linkedin",
       link: item.link || "",
+      // Store possible company name as hint for website search
+      address: possibleCompany,
     });
   }
   return results;

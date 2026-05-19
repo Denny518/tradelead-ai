@@ -145,12 +145,12 @@ export default function DashboardPage() {
   );
 
   const handleFindEmail = useCallback(
-    async (domain: string, companyName?: string, address?: string) => {
+    async (domain: string, companyName?: string, address?: string, source?: string) => {
       const key = domain || companyName || "";
       if (!key || emailResults[key]) return;
       setFindingEmail(key);
       try {
-        const res = await findEmail(domain, companyName, address);
+        const res = await findEmail(domain, companyName, address, source);
         if (res.success) {
           setEmailResults((prev) => ({ ...prev, [key]: res.data || [] }));
         } else if (res.needsManualDomain) {

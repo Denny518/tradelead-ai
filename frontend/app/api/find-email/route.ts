@@ -6,15 +6,21 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     let { company_domain } = body;
-    const { company_name, address } = body;
+    const { company_name, address, source } = body;
 
-    // If no domain but we have company name, try to find their website
-    if ((!company_domain || company_domain.trim() === "") && company_name) {
-      const found = await findCompanyWebsite(company_name, address || "");
+    // For LinkedIn results: use possible company name from address field, not person name
+    const searchCompanyName = source === "linkedin" && address ? address : company_name;
+
+    // If no domain but we have a company name, try to find their website
+    if ((!company_domain || company_domain.trim() === "") && (searchCompanyName || company_name)) {
+      const nameToSearch = searchCompanyName || company_name;
+      const found = await findCompanyWebsite(nameToSearch, source !== "linkedin" ? address : "");
       if (!found) {
         return NextResponse.json({
           success: false,
-          message: `无法自动找到 ${company_name} 的官网。请手动输入域名重试。`,
+          message: source === "linkedin"
+            ? `无法自动找到 ${nameToSearch} 的公司官网。请手动输入公司域名重试。`
+            : `无法自动找到 ${nameToSearch} 的官网。请手动输入域名重试。`,
           needsManualDomain: true,
         }, { status: 404 });
       }

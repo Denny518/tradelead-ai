@@ -23,7 +23,7 @@ function SourceBadge({ source }: { source?: string }) {
 
 interface SearchResultsProps {
   results: SearchResultItem[];
-  onFindEmail: (website: string, companyName: string, address?: string) => void;
+  onFindEmail: (website: string, companyName: string, address?: string, source?: string) => void;
   onGenerateEmail: (item: SearchResultItem) => void;
   onSaveToCRM: (item: SearchResultItem) => void;
   findingEmail: string | null;
@@ -146,12 +146,12 @@ export default function SearchResults({
                           </span>
                         ) : (
                           <button
-                            onClick={() => onFindEmail(domain, item.company_name, item.address)}
+                            onClick={() => onFindEmail(domain, item.company_name, item.address, item.source)}
                             disabled={findingEmail === domain}
                             className="px-2 py-1.5 text-[11px] font-medium text-blue-600 bg-blue-50 rounded-md hover:bg-blue-100 disabled:opacity-50 transition-colors whitespace-nowrap"
-                            title={!domain && isGoogleMaps ? "此商家未列官网，将自动搜索其网站" : ""}
+                            title={!domain && item.source === "linkedin" ? "从LinkedIn资料提取公司名，搜索官网后查邮箱" : !domain && isGoogleMaps ? "此商家未列官网，将自动搜索其网站" : ""}
                           >
-                            {findingEmail === domain ? "查找中..." : !domain ? "搜官网+找邮箱" : "找邮箱"}
+                            {findingEmail === domain ? "查找中..." : !domain && item.source === "linkedin" ? "提取公司→搜官网→查邮箱" : !domain ? "搜官网+找邮箱" : "找邮箱"}
                           </button>
                         )}
                         <span className="text-gray-300 mx-0.5">→</span>
