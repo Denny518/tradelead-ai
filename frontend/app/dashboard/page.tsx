@@ -78,10 +78,10 @@ export default function DashboardPage() {
       if (res.success && res.url) {
         window.location.href = res.url;
       } else {
-        alert(res.message || "Gmail API 未配置。请在 Google Cloud Console 创建 OAuth 2.0 客户端 ID。");
+        alert(res.message || "Gmail API 未配置");
       }
-    } catch (err) {
-      alert("获取 Gmail 授权链接失败");
+    } catch (err: any) {
+      alert(err.message || "获取 Gmail 授权链接失败，请重试");
     }
   };
 

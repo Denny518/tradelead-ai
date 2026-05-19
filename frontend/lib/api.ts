@@ -4,8 +4,15 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
     ...options,
   });
   if (!res.ok) {
-    const err = await res.text();
-    throw new Error(`API error ${res.status}: ${err}`);
+    // Try to extract message from JSON response
+    try {
+      const body = await res.json();
+      throw new Error(body.message || `API error ${res.status}`);
+    } catch (e) {
+      if (e instanceof Error && e.message && !e.message.includes("Unexpected")) throw e;
+      const err = await res.text();
+      throw new Error(`API error ${res.status}: ${err}`);
+    }
   }
   return res.json();
 }
