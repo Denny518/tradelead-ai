@@ -57,11 +57,11 @@ export default function QuotationPage() {
 
   return (
     <div>
-      <h2 className="text-lg font-semibold text-gray-900 mb-6">AI 报价单生成器</h2>
+      <h2 className="text-lg font-semibold text-gray-900 mb-6 no-print">AI 报价单生成器</h2>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
         {/* Input */}
-        <div className="space-y-4">
+        <div className="space-y-4 no-print">
           {/* Scenario & Template */}
           <div className="bg-white rounded-xl border border-gray-200 p-5">
             <h3 className="text-sm font-semibold text-gray-700 mb-3">报价场景</h3>
@@ -176,7 +176,7 @@ export default function QuotationPage() {
         {/* Preview */}
         <div>
           {result ? (
-            <div className="bg-white rounded-xl border border-gray-200 p-6 sticky top-4">
+            <div className="print-area bg-white rounded-xl border border-gray-200 p-6 sticky top-4">
               <div className="flex items-center justify-between mb-4 pb-4 border-b">
                 <div>
                   <h3 className="text-lg font-bold text-gray-900">{result.quotationTitle}</h3>
@@ -211,7 +211,7 @@ export default function QuotationPage() {
               <p className="text-sm text-gray-700 mb-2">{result.closingText}</p>
               <p className="text-xs text-gray-400">{result.footerNote}</p>
 
-              <div className="mt-4 flex gap-2">
+              <div className="mt-4 flex gap-2 no-print">
                 <button onClick={() => window.print()} className="px-4 py-2 text-sm border rounded-lg hover:bg-gray-50">打印 PDF</button>
                 <button onClick={() => navigator.clipboard.writeText(JSON.stringify(result, null, 2))} className="px-4 py-2 text-sm bg-primary text-white rounded-lg hover:bg-primary-dark">复制 JSON</button>
               </div>

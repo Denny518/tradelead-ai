@@ -25,6 +25,37 @@ body {
   animation: slideIn 200ms ease-out;
 }
 
+/* Print styles — hide everything except quotation */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .print-area,
+  .print-area * {
+    visibility: visible;
+  }
+  .print-area {
+    position: absolute;
+    inset: 0;
+    padding: 20px !important;
+    margin: 0 !important;
+    max-width: 100% !important;
+    border: none !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+  }
+  .no-print {
+    display: none !important;
+  }
+  nav, header, footer, aside, button, .sidebar, .navbar {
+    display: none !important;
+  }
+  @page {
+    size: A4;
+    margin: 10mm;
+  }
+}
+
 /* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 6px;

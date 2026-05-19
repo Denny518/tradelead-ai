@@ -15,7 +15,7 @@ export interface SearchResult {
   link?: string;
 }
 
-export type SearchEngine = "google" | "google_maps" | "google_local" | "google_shopping" | "google_news" | "bing";
+export type SearchEngine = "google" | "google_maps" | "google_local" | "google_shopping" | "google_news" | "bing" | "linkedin";
 
 interface SearchOptions {
   engine: SearchEngine;
@@ -295,6 +295,7 @@ export async function multiSearch(opts: SearchOptions): Promise<SearchResult[]> 
     case "google_shopping": return searchShopping(opts);
     case "google_news": return searchNews(opts);
     case "bing": return searchBing(opts);
+    case "linkedin": return searchLinkedIn(opts);
     default: return [];
   }
 }
@@ -315,6 +316,162 @@ export async function searchAllEngines(opts: Omit<SearchOptions, "engine">): Pro
   );
 
   return results;
+}
+
+// ── LinkedIn Search (via Google site:linkedin.com) ────────────
+async function searchLinkedIn(opts: SearchOptions): Promise<SearchResult[]> {
+  if (!SERPAPI_KEY) return [];
+  const q = opts.customQuery || `site:linkedin.com/in/ ${opts.role || "procurement OR purchasing OR buyer OR sourcing"} "${opts.product}" ${opts.market}`;
+
+  const params = new URLSearchParams({
+    engine: "google",
+    q: q.trim(),
+    api_key: SERPAPI_KEY,
+    num: String(Math.min(opts.limit || 10, 30)),
+    hl: "en",
+  });
+
+  const resp = await fetch(`${BASE}?${params}`);
+  if (!resp.ok) return [];
+  const data = await resp.json();
+
+  const results: SearchResult[] = [];
+  for (const item of (data.organic_results || []).slice(0, opts.limit || 10)) {
+    const title = item.title || "";
+    const snippet = item.snippet || "";
+    // Extract name from LinkedIn profile title: "John Smith - Procurement Manager - Company | LinkedIn"
+    const nameParts = title.split(" - ");
+    const personName = nameParts[0]?.trim() || "";
+    const role = nameParts[1]?.trim() || "";
+
+    results.push({
+      company_name: personName,
+      website: item.link || "",
+      description: `${role} | ${snippet.slice(0, 120)}`,
+      match_score: scoreMatch(snippet + title, opts.product),
+      source: "linkedin",
+      link: item.link || "",
+    });
+  }
+  return results;
+}
+
+// ── Buying Signals ────────────────────────────────────────────
+export interface BuyingSignal {
+  company_name: string;
+  signal_type: string;    // "hiring", "funding", "expansion", "new_project", "trade_show"
+  signal_strength: "strong" | "medium" | "weak";
+  description: string;
+  source_url: string;
+  source_engine: string;
+  match_score: number;
+  recommendation: string;
+}
+
+export async function searchBuyingSignals(opts: {
+  product: string;
+  market: string;
+  industry?: string;
+}): Promise<BuyingSignal[]> {
+  if (!SERPAPI_KEY) return mockBuyingSignals(opts);
+
+  const allSignals: BuyingSignal[] = [];
+
+  // Signal 1: Companies hiring (job postings = growing = potential buyer)
+  try {
+    const jobQuery = `site:linkedin.com/jobs/ ${opts.product} ${opts.market}`;
+    const jobParams = new URLSearchParams({ engine: "google", q: jobQuery, api_key: SERPAPI_KEY, num: "5", hl: "en" });
+    const jobResp = await fetch(`${BASE}?${jobParams}`);
+    if (jobResp.ok) {
+      const jobData = await jobResp.json();
+      for (const item of (jobData.organic_results || []).slice(0, 5)) {
+        allSignals.push({
+          company_name: extractCompanyName(item.title || ""),
+          signal_type: "hiring",
+          signal_strength: "medium",
+          description: `正在招聘 ${opts.product} 相关职位 — ${item.snippet?.slice(0, 100) || ""}`,
+          source_url: item.link || "",
+          source_engine: "linkedin_jobs",
+          match_score: scoreMatch(item.snippet || "", opts.product),
+          recommendation: "该公司正在扩招，可能有新的采购需求。建议发送合作提案。",
+        });
+      }
+    }
+  } catch {}
+
+  // Signal 2: Company news (funding, expansion, new projects)
+  try {
+    const newsQuery = `${opts.product} ${opts.market} funding OR expansion OR "new facility" OR "new project"`;
+    const newsParams = new URLSearchParams({ engine: "google_news", q: newsQuery, api_key: SERPAPI_KEY, num: "5", hl: "en" });
+    const newsResp = await fetch(`${BASE}?${newsParams}`);
+    if (newsResp.ok) {
+      const newsData = await newsResp.json();
+      for (const item of (newsData.news_results || []).slice(0, 5)) {
+        const title = item.title || "";
+        const isExpansion = /expand|new facility|new plant|new office|new warehouse/i.test(title);
+        const isFunding = /funding|investment|series|raised|acquired/i.test(title);
+        const signalType = isFunding ? "funding" : isExpansion ? "expansion" : "new_project";
+
+        allSignals.push({
+          company_name: item.source?.name || extractCompanyName(title),
+          signal_type: signalType,
+          signal_strength: isFunding ? "strong" : isExpansion ? "strong" : "medium",
+          description: `${title} — ${item.snippet?.slice(0, 100) || ""}`,
+          source_url: item.link || "",
+          source_engine: "google_news",
+          match_score: scoreMatch(title + " " + (item.snippet || ""), opts.product),
+          recommendation: isFunding ? "获得融资后通常会扩大采购，建议立即联系。" : isExpansion ? "扩建设施意味着新的设备采购需求，建议跟进。" : "可能涉及新的采购需求，建议发送合作咨询。",
+        });
+      }
+    }
+  } catch {}
+
+  // Signal 3: Trade shows / exhibitions
+  try {
+    const expoQuery = `${opts.industry || opts.product} trade show exhibition ${opts.market} 2026`;
+    const expoParams = new URLSearchParams({ engine: "google", q: expoQuery, api_key: SERPAPI_KEY, num: "5", hl: "en" });
+    const expoResp = await fetch(`${BASE}?${expoParams}`);
+    if (expoResp.ok) {
+      const expoData = await expoResp.json();
+      for (const item of (expoData.organic_results || []).slice(0, 3)) {
+        allSignals.push({
+          company_name: extractCompanyName(item.title || ""),
+          signal_type: "trade_show",
+          signal_strength: "weak",
+          description: `行业展会 — ${item.title || ""}`,
+          source_url: item.link || "",
+          source_engine: "google",
+          match_score: 50,
+          recommendation: "参展或参观此类展会可获取大量潜在客户。建议安排参展或派人参观。",
+        });
+      }
+    }
+  } catch {}
+
+  // Deduplicate and sort by strength
+  const seen = new Set<string>();
+  const unique: BuyingSignal[] = [];
+  for (const s of allSignals) {
+    const key = s.company_name + s.signal_type;
+    if (!seen.has(key)) { seen.add(key); unique.push(s); }
+  }
+  unique.sort((a, b) => {
+    const order: Record<string, number> = { strong: 0, medium: 1, weak: 2 };
+    return (order[a.signal_strength] || 2) - (order[b.signal_strength] || 2);
+  });
+
+  return unique.slice(0, 15);
+}
+
+function mockBuyingSignals(opts: { product: string; market: string; industry?: string }): BuyingSignal[] {
+  return [
+    { company_name: "TechVision Corp", signal_type: "funding", signal_strength: "strong", description: `TechVision Corp raises $50M Series B to expand ${opts.product} capabilities in ${opts.market}`, source_url: "", source_engine: "google_news", match_score: 85, recommendation: "获得融资后通常会扩大采购。建议立即联系采购部门。" },
+    { company_name: "Metro Displays Inc", signal_type: "hiring", signal_strength: "medium", description: `Hiring Procurement Specialist for ${opts.product} division — ${opts.market}`, source_url: "", source_engine: "linkedin_jobs", match_score: 78, recommendation: "正在招采购专员，意味着有新的采购计划。建议发送开发信给 HR 或采购经理。" },
+    { company_name: "Global Trade Partners", signal_type: "expansion", signal_strength: "strong", description: `Opening new distribution center in ${opts.market}, plans to expand ${opts.product} sourcing`, source_url: "", source_engine: "google_news", match_score: 82, recommendation: "新仓库意味着需要补充库存。建议提供产品目录和报价。" },
+    { company_name: "BrightSign Solutions", signal_type: "hiring", signal_strength: "medium", description: `Looking for ${opts.product} supplier to support growing demand in ${opts.market}`, source_url: "", source_engine: "linkedin_jobs", match_score: 75, recommendation: "正在主动寻找供应商。建议发送样品和报价单。" },
+    { company_name: "Digital Displays LLC", signal_type: "new_project", signal_strength: "medium", description: `Announced new ${opts.product} project for retail chain in ${opts.market}`, source_url: "", source_engine: "google_news", match_score: 70, recommendation: "新项目通常需要多个供应商。建议联系并提供竞争力报价。" },
+    { company_name: `International ${opts.industry || "Trade"} Expo`, signal_type: "trade_show", signal_strength: "weak", description: `Major ${opts.product} trade show coming up in ${opts.market}`, source_url: "", source_engine: "google", match_score: 60, recommendation: "建议安排参展或派人参观，获取大量潜在客户。" },
+  ];
 }
 
 function getGeoCode(market: string): string {

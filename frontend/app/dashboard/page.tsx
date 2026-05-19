@@ -15,6 +15,7 @@ import MarketIntelPage from "@/components/MarketIntelPage";
 import TeamPage from "@/components/TeamPage";
 import PipelinePage from "@/components/PipelinePage";
 import OverviewPage from "@/components/OverviewPage";
+import BuyingSignalsPage from "@/components/BuyingSignalsPage";
 import {
   searchCustomers, findEmail, generateEmail, createCustomer,
   saveEmailToCustomer, getProductKnowledge, getDashboardStats,
@@ -392,6 +393,7 @@ export default function DashboardPage() {
 
           {/* P2 Features */}
           {activeTab === "followups" && <FollowupsPage />}
+          {activeTab === "buyingsignals" && <BuyingSignalsPage />}
           {activeTab === "dealscore" && <DealScorePage />}
           {activeTab === "marketintel" && <MarketIntelPage />}
           {activeTab === "pipeline" && <PipelinePage />}

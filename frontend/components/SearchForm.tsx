@@ -46,19 +46,22 @@ const EngineIcon = ({ type }: { type: string }) => {
       return <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>;
     case "all":
       return <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="10"/><path d="M12 2a10 10 0 019.5 6.5M12 2v10l6.5 4.5M12 22a10 10 0 009.5-6.5M12 22V12l-9.5-6.5M2.5 6.5A10 10 0 0112 2M22 12h-10M2 12h10"/></svg>;
+    case "linkedin":
+      return <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>;
     default:
       return <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/></svg>;
   }
 };
 
 const ENGINES = [
-  { value: "google", label: "Google 搜索", icon: <EngineIcon type="google" />, desc: "通用网页搜索，覆盖面最广" },
-  { value: "google_maps", label: "Google Maps", icon: <EngineIcon type="google_maps" />, desc: "按地理位置搜索实体商家" },
-  { value: "google_local", label: "Google Local", icon: <EngineIcon type="google_local" />, desc: "本地商家+评分+电话+地址" },
-  { value: "google_shopping", label: "Shopping", icon: <EngineIcon type="google_shopping" />, desc: "搜目标市场谁在卖同类产品" },
-  { value: "google_news", label: "Google News", icon: <EngineIcon type="google_news" />, desc: "行业新闻中提取公司信息" },
-  { value: "bing", label: "Bing 搜索", icon: <EngineIcon type="bing" />, desc: "交叉验证，覆盖不同数据源" },
-  { value: "all", label: "全部引擎", icon: <EngineIcon type="all" />, desc: "并行搜索所有引擎，最全面（放在最后因为速度最慢）" },
+  { value: "google", label: "Google", icon: <EngineIcon type="google" />, desc: "通用网页搜索" },
+  { value: "google_maps", label: "Maps", icon: <EngineIcon type="google_maps" />, desc: "搜实体商家" },
+  { value: "google_local", label: "Local", icon: <EngineIcon type="google_local" />, desc: "商家+评分+电话" },
+  { value: "linkedin", label: "LinkedIn", icon: <EngineIcon type="linkedin" />, desc: "site:linkedin.com 搜决策人" },
+  { value: "google_shopping", label: "Shopping", icon: <EngineIcon type="google_shopping" />, desc: "搜同类产品" },
+  { value: "google_news", label: "News", icon: <EngineIcon type="google_news" />, desc: "行业新闻" },
+  { value: "bing", label: "Bing", icon: <EngineIcon type="bing" />, desc: "交叉验证" },
+  { value: "all", label: "全部引擎", icon: <EngineIcon type="all" />, desc: "并行搜索，最全面" },
 ];
 
 interface SearchFormProps {
@@ -116,7 +119,7 @@ export default function SearchForm({ onSearch, loading }: SearchFormProps) {
       {/* Engine Selector */}
       <div className="mb-5">
         <label className="block text-sm font-medium text-gray-700 mb-2">搜索引擎</label>
-        <div className="grid grid-cols-4 md:grid-cols-7 gap-2">
+        <div className="grid grid-cols-4 sm:grid-cols-5 lg:grid-cols-8 gap-2">
           {ENGINES.map((eng) => (
             <button
               key={eng.value}
